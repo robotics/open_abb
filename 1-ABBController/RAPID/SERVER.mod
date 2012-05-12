@@ -5,8 +5,8 @@ MODULE SERVER
 !////////////////
 
 !//Robot configuration
-PERS tooldata currentTool := [TRUE,[[0,0,105],[1,0,0,0]],[0.001,[0,0,0.001],[1,0,0,0],0,0,0]];    
-PERS wobjdata currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[500,0,250],[0,0,1,0]]];   
+PERS tooldata currentTool := [TRUE,[[0,0,0],[1,0,0,0]],[0.001,[0,0,0.001],[1,0,0,0],0,0,0]];    
+PERS wobjdata currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[500,0,500],[0,0,1,0]]];   
 PERS speeddata currentSpeed;
 PERS zonedata currentZone;
 !//NOTE:To modify the default values go to the method Initialize
@@ -17,7 +17,9 @@ VAR socketdev serverSocket;
 VAR num instructionCode;
 VAR num params{10};
 VAR num nParams;
-PERS string ipController:= "192.168.180.128";
+!PERS string ipController:= "192.168.180.128";
+!PERS string ipController:= "127.0.0.1"; !localhost
+PERS string ipController:= "192.168.1.7"; !mlab Network
 PERS num serverPort:= 5000;
 
 !//Motion of the robot
@@ -245,11 +247,7 @@ PROC main()
                     ok:=SERVER_BAD_MSG;
                 ENDIF
             CASE 8: !Specify Speed of the Robot
-                IF nParams = 2 THEN
-                    currentSpeed.v_tcp:=params{1};
-                    currentSpeed.v_ori:=params{2};
-                    ok := SERVER_OK;
-                ELSEIf nParams = 4 THEN
+                IF nParams = 4 THEN
                     currentSpeed.v_tcp:=params{1};
                     currentSpeed.v_ori:=params{2};
                     currentSpeed.v_leax:=params{3};
