@@ -1,0 +1,34 @@
+PROJECT_NAME           = Open ABB Driver C++
+PROJECT_NUMBER         = 1.0
+OUTPUT_DIRECTORY       = doc
+OUTPUT_LANGUAGE        = English
+FULL_PATH_NAMES        = YES
+TAB_SIZE               = 4
+ALIASES                =
+
+#Documentation generation
+GENERATE_LATEX         = NO
+GENERATE_HTML	       = YES
+OPTIMIZE_OUTPUT_FOR_C  = NO
+BUILTIN_STL_SUPPORT    = YES
+EXTRACT_ALL            = YES
+
+#Hide all documentation in between the code
+HIDE_IN_BODY_DOCS      = NO 
+SORT_MEMBER_DOCS       = YES
+SORT_MEMBERS_CTORS_1ST = NO
+SORT_GROUP_NAMES       = YES
+QUIET                  = YES
+INPUT                  = src/ 
+RECURSIVE              = YES
+EXCLUDE                =
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = NO
+STRIP_CODE_COMMENTS    = YES
+ALPHABETICAL_INDEX     = YES
+
+#html output configuration
+HTML_OUTPUT            = html
+DOCSET_PUBLISHER_NAME  = Alberto Rodriguez
+
+

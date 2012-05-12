@@ -1,0 +1,5 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<devices_registry xmlns="urn:abb-robotics-registry-devices">
+<struct prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/devices/" postpath="SYS_devices_struct.xml"/>
+<text prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/devices/SYS_devices_text.xml"/>
+</devices_registry>

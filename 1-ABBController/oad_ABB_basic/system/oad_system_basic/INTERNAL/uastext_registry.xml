@@ -1,0 +1,4 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<uastext_registry xmlns="urn:abb-robotics-registry-uas-text">
+<entry domain="Builtin" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/uas/uastext.xml"/>
+</uastext_registry>
