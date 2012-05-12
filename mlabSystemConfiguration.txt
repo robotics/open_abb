@@ -1,0 +1,73 @@
+System Name: SimpleHandsSystem
+Serial Number: INTERNAL_USE
+Using Media:
+
+Media:
+
+Name: RobotWare
+Version: 5.13.1034.01
+
+Control Module:
+Key: uCnQJIon7ssNpppwnCp1ooodoolpC
+Key Signature: 97
+Options:
+
+RW Control module key
+
+RobotWare OS and English
+
+709-x DeviceNet
+
+- 709-1 Master/Slave Single
+
+608-1 World Zones
+
+609-1 Fixed Position Events
+
+613-1 Collision Detection
+
+616-1 PC Interface
+
+617-1 FlexPendant Interface
+
+620-1 File and Serial Channel Handling
+
+672-1 Socket Messaging
+
+621-1 Logical Cross Connections
+
+622-1 Analog Signal Interrupt
+
+623-1 Multitasking
+
+626-1 Advanced RAPID
+
+661-2 Assembly FC
+
+Robot Reference Inteface
+
+Drive Module:
+Key: Fy6929qjV5M
+Key Signature: 110
+Manipulator: 
+ABB standard manipulator
+Add axes IRB/drive module 140/1400
+IRB 140 Type C
+
+Options:
+
+RW Drive module 1 key
+
+ABB standard manipulator
+
+- IRB 140 Type C
+
+- 140 Type C
+
+Add axes IRB/drive module 140/1400
+
+- R2C4 Add drive 3 x U or prepared
+
+- No drive in pos Z4
+
+Additional Options 
