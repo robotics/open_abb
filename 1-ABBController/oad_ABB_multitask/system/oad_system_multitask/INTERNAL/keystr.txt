@@ -1,0 +1,3 @@
+#Loaded keys in C:\Users\simplehands\Desktop\OpenABBDriver\1-ABBController\oad_ABB_multitask\system\oad_system_multitask\INTERNAL\keystr.txt:
+Z4KKKKLJJDccIKKKKKKKh
+RGaAcDDAtn	1

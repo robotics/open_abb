@@ -1,0 +1,48 @@
+#
+# Generated backup file, do not edit.
+#
+# Originally at: C:/Users/SIMPLE~1/AppData/Local/Temp/_RS_/{BC6EE8C3_CDDF_45EB_817D_BD32F4D009DA}/3310A997
+# 12-05-12  16:38:50
+#
+>>SYSTEM_ID:
+VIRTUAL_USE
+
+>>PRODUCTS_ID:
+RobotWare Version: 5.13.2039.02
+
+  RW Control module key
+  RobotWare OS and English
+  616-1 PC Interface
+  623-1 Multitasking
+  RW Drive module 1 key
+  ABB standard manipulator
+  IRB 140 Type A
+  140-5/0.8 Type A
+  Drive System 04 120/140/1400
+  RC1 No add drive
+
+>>ROBOT_TYPE:
+140-5/0.8 Type A
+
+>>HOME:
+All public files and directories
+
+>>SYSPAR:
+SYS.cfg
+PROC.cfg
+EIO.cfg
+SIO.cfg
+MOC.cfg
+MMC.cfg
+
+
+>>TASK1: (T_ROB1,,)
+SYSMOD\user.sys @ user.sys
+PROGMOD\SERVER.mod @ server.mod
+
+>>TASK2: (LOGGER,,)
+SYSMOD\user.sys @ user.sys
+PROGMOD\LOGGER.mod @ logger.mod
+
+
+>>EOF:

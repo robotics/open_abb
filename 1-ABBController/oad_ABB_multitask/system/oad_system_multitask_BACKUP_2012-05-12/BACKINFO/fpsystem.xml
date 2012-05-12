@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!--Comments: Settings for the FlexPendant.-->
+<FP>
+  <USER name="">
+    <DATA id="QuickSet">
+      <PROP name="IncrementToggle" value="Small" />
+    </DATA>
+    <DATA id="ViewInAuto">
+      <PROP name="text" value="PARAM_TXT_VIEWINAUTO" />
+      <PROP name="dll" value="TpsViewProductionWnd.dll" />
+      <PROP name="type" value="ABB.Robotics.Tps.Production.TpsViewProductionWnd" />
+    </DATA>
+    <DATA id="UASViewLevel">
+      <PROP name="text" value="PARAM_TXT_UASVIEWLEVEL" />
+      <PROP name="level" value="Msg" />
+      <PROP name="type" value="" />
+    </DATA>
+    <DATA id="Programmable Key_3">
+      <PROP name="type" value="None" />
+      <PROP name="allowInAuto" value="No" />
+      <PROP name="pressed" value="" />
+      <PROP name="target" value="" />
+    </DATA>
+    <DATA id="Joystick Values">
+      <PROP name="Pos" value="10,20,40,60,90,120,178,275,412,587,801,1055,1347,1678,2048" />
+      <PROP name="Neg" value="-10,-20,-40,-60,-90,-120,-178,-275,-412,-587,-801,-1055,-1347,-1678,-2048" />
+    </DATA>
+    <DATA id="AdditionalTestView">
+      <PROP name="TestView" value="" />
+    </DATA>
+    <DATA id="ViewInManual">
+      <PROP name="text" value="PARAM_TXT_VIEWINMANUAL" />
+      <PROP name="dll" value="" />
+      <PROP name="type" value="" />
+    </DATA>
+    <DATA id="ViewInManFull">
+      <PROP name="text" value="PARAM_TXT_VIEWINMANFULL" />
+      <PROP name="dll" value="" />
+      <PROP name="type" value="" />
+    </DATA>
+    <DATA id="Programmable Key_2">
+      <PROP name="type" value="None" />
+      <PROP name="allowInAuto" value="No" />
+      <PROP name="pressed" value="" />
+      <PROP name="target" value="" />
+    </DATA>
+    <DATA id="Program Editor">
+      <PROP name="HideDeclarations" value="False" />
+    </DATA>
+    <DATA id="Programmable Key_1">
+      <PROP name="type" value="None" />
+      <PROP name="allowInAuto" value="No" />
+      <PROP name="pressed" value="" />
+      <PROP name="target" value="" />
+    </DATA>
+    <DATA id="Programmable Key_4">
+      <PROP name="type" value="None" />
+      <PROP name="allowInAuto" value="No" />
+      <PROP name="pressed" value="" />
+      <PROP name="target" value="" />
+    </DATA>
+  </USER>
+</FP>

@@ -1,0 +1,30 @@
+MODULE BASEFUN (SYSMODULE, VIEWONLY)
+  
+ PROC LoadIdentify()
+   ! Service routine Load Identification
+   !***************************************************
+  
+   LoadIdentifyProc;
+   
+   UNDO
+     LoadIdTerminate;
+ ENDPROC
+
+ PROC ManLoadIdentify()
+   ! Service routine for ext. manipulators Load Identification
+   !***************************************************
+
+   ManLoadIdProc \DoExit:=TRUE;
+   
+   UNDO
+     LoadIdTerminate;
+ ENDPROC
+
+ 
+ PROC SkipTaskExec()
+   ! Service routine for setting C_TASKSATSTART
+   !***************************************************
+
+   SetCTasksAtStart;
+ ENDPROC
+ENDMODULE

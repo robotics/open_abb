@@ -1,0 +1,10 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<cfgtext_registry xmlns="urn:abb-robotics-registry-cfg-text">
+<entry domain="EIO" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/Cfg/cir_eio_cfgtext.xml"/>
+<entry domain="EIO" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/Cfg/eio_cfgtext.xml"/>
+<entry domain="SIO" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/Cfg/sio_cfgtext.xml"/>
+<entry domain="SYS" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/Cfg/cir_sys_cfgtext.xml"/>
+<entry domain="MOC" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/Cfg/moc_cfgtext.xml"/>
+<entry domain="MMC" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/language/install/../" postpath="/Controller/Cfg/cir_mmc_cfgtext.xml"/>
+<entry domain="SYS" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/options/mt/language/" postpath="/cir_sys_mt_cfgtext.xml"/>
+</cfgtext_registry>

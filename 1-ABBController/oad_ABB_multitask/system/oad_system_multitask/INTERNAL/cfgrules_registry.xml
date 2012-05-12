@@ -1,0 +1,10 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<cfgrules_registry xmlns="urn:abb-robotics-registry-cfg-rules">
+<entry domain="EIO" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/cfg/" postpath="cir_eio_cfgrules.xml"/>
+<entry domain="MOC" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/cfg/" postpath="moc_cfgrules.xml"/>
+<entry domain="EIO" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/cfg/" postpath="eio_cfgrules.xml"/>
+<entry domain="SIO" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/cfg/" postpath="sio_cfgrules.xml"/>
+<entry domain="SYS" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/cfg/" postpath="cir_sys_cfgrules.xml"/>
+<entry domain="MMC" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/rules/cfg/" postpath="cir_mmc_cfgrules.xml"/>
+<entry domain="SYS" prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/options/mt/" postpath="cir_sys_mt_cfgrules.xml"/>
+</cfgrules_registry>

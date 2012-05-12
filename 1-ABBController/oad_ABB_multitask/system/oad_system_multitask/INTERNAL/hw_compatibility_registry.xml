@@ -1,0 +1,4 @@
+<?xml version = "1.0" encoding="utf-8" ?>
+<hw_compatibility_registry xmlns="urn:abb-robotics-registry-hw-compatibility">
+<hw_compatibility prepath="C:/PROGRAM FILES (X86)/ABB INDUSTRIAL IT/ROBOTICS IT/MEDIAPOOL/ROBOTWARE_5.13.2039/firmware/" postpath="hw_compatibility.xml"/>
+</hw_compatibility_registry>

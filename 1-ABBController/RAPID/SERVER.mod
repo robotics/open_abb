@@ -297,10 +297,12 @@ PROC main()
         !Compose the acknowledge string to send back to the client
         IF connected = TRUE THEN
             IF reconnected = FALSE THEN
-                sendString := NumToStr(instructionCode,0);
-                sendString := sendString + " " + NumToStr(ok,0);
-                sendString := sendString + " " + addString;
-                SocketSend clientSocket \Str:=sendString;
+			    IF SocketGetStatus(clientSocket) = SOCKET_CONNECTED THEN
+				    sendString := NumToStr(instructionCode,0);
+                    sendString := sendString + " " + NumToStr(ok,0);
+                    sendString := sendString + " " + addString;
+                    SocketSend clientSocket \Str:=sendString;
+			    ENDIF
             ENDIF
         ENDIF
     ENDWHILE
