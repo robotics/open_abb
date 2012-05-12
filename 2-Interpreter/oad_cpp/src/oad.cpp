@@ -295,7 +295,7 @@ int oad::parseCartesian(std::string msg, double *x, double *y,
     double *z,double *q0, double *qx, double *qy, double*qz)
 {
   int ok;
-  sscanf(msg.c_str(),"%*d %d %*f %lf %lf %lf %lf %lf %lf %lf",&ok,x,y,z,q0,qx,qy,qz);
+  sscanf(msg.c_str(),"%*d %d %lf %lf %lf %lf %lf %lf %lf",&ok,x,y,z,q0,qx,qy,qz);
   return ok;
 }
 
@@ -315,7 +315,7 @@ int oad::parseJoints(std::string msg,  double *joint1,
     double *joint5, double *joint6)
 {
   int ok;
-  sscanf(msg.c_str(),"%*d %d %*f %lf %lf %lf %lf %lf %lf",&ok,joint1,joint2,joint3,joint4,joint5,joint6);
+  sscanf(msg.c_str(),"%*d %d %lf %lf %lf %lf %lf %lf",&ok,joint1,joint2,joint3,joint4,joint5,joint6);
   return ok;
 }
 

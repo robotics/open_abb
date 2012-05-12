@@ -36,7 +36,10 @@ doc: $(LIB)
 
 
 #sample programs
-samples: $(LIB) $(SDIR)/basicDemo/basicDemo
+samples: $(LIB) $(SDIR)/basicDemo/basicDemo $(SDIR)/multitaskDemo/multitaskDemo clean
 
 $(SDIR)/basicDemo/basicDemo:
 	make -C $(SDIR)/basicDemo
+
+$(SDIR)/multitaskDemo/multitaskDemo:
+	make -C $(SDIR)/multitaskDemo
