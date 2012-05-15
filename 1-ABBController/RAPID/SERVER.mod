@@ -6,7 +6,7 @@ MODULE SERVER
 
 !//Robot configuration
 PERS tooldata currentTool := [TRUE,[[0,0,0],[1,0,0,0]],[0.001,[0,0,0.001],[1,0,0,0],0,0,0]];    
-PERS wobjdata currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[500,0,500],[0,0,1,0]]];   
+PERS wobjdata currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[0,0,0],[1,0,0,0]]];   
 PERS speeddata currentSpeed;
 PERS zonedata currentZone;
 !//NOTE:To modify the default values go to the method Initialize
@@ -18,14 +18,24 @@ VAR num instructionCode;
 VAR num params{10};
 VAR num nParams;
 !PERS string ipController:= "192.168.180.128";
-!PERS string ipController:= "127.0.0.1"; !localhost
-PERS string ipController:= "192.168.1.7"; !mlab Network
+PERS string ipController:= "127.0.0.1"; !localhost
+!PERS string ipController:= "192.168.1.7"; !mlab Network
 PERS num serverPort:= 5000;
 
 !//Motion of the robot
 VAR robtarget cartesianTarget;
 VAR jointtarget jointsTarget;
 VAR bool moveCompleted; !Set to true after finishing a Move instruction.
+
+!//Buffered move variables
+CONST num MAX_BUFFER := 512;
+VAR num BUFFER_POS := 0;
+VAR robtarget bufferTargets{MAX_BUFFER};
+VAR speeddata bufferSpeeds{MAX_BUFFER};
+
+!//External axis position variables
+VAR extjoint externalAxis;
+
 
 !//Correct Instruction Execution and possible return values
 VAR num ok;
@@ -121,6 +131,7 @@ PROC Initialize()
     currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[0,0,0],[1,0,0,0]]];
     currentSpeed := [100, 50, 0, 0];
     currentZone := [FALSE, 0.3, 0.3,0.3,0.03,0.3,0.03]; !z0
+	externalAxis := [9E9,9E9,9E9,9E9,9E9,9E9];
 ENDPROC
 
 
@@ -174,7 +185,7 @@ PROC main()
                     cartesianTarget :=[[params{1},params{2},params{3}],
                                        [params{4},params{5},params{6},params{7}],
                                        [0,0,0,0],
-                                       [9E9,9E9,9E9,9E9,9E9,9E9]];
+                                       externalAxis];
                     ok := SERVER_OK;
                     moveCompleted := FALSE;
                     MoveL cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
@@ -273,6 +284,47 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
+				
+			CASE 10: !Add Cartesian Coordinates to buffer
+				IF nParams = 7 THEN
+					cartesianTarget :=[[params{1},params{2},params{3}],
+						  [params{4},params{5},params{6},params{7}],
+					  	  [0,0,0,0],
+					  	  externalAxis];
+					IF BUFFER_POS < MAX_BUFFER THEN
+						BUFFER_POS := BUFFER_POS + 1;
+						bufferTargets{BUFFER_POS} := cartesianTarget;
+						bufferSpeeds{BUFFER_POS} := currentSpeed;
+					ENDIF
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+				ENDIF
+			CASE 11: !Clear Cartesian Buffer
+				IF nParams = 0 THEN
+					BUFFER_POS := 0;	
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+				ENDIF
+			
+			CASE 12: !Get Buffer Size)
+				IF nParams = 0 THEN
+					addString := NumToStr(BUFFER_POS,2);
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+				ENDIF
+			
+			CASE 13: !Execute moves in cartesianBuffer as linear moves
+				IF nParams = 0 THEN
+					FOR i FROM 1 TO (BUFFER_POS) DO 
+						MoveL bufferTargets{i}, bufferSpeeds{i}, currentZone, currentTool \WObj:=currentWobj ;
+					ENDFOR			
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+				ENDIF	
             CASE 99: !Close Connection
                 IF nParams = 0 THEN
                     TPWrite "SERVER: Client has closed connection.";
