@@ -17,8 +17,8 @@ VAR socketdev serverSocket;
 VAR num instructionCode;
 VAR num params{10};
 VAR num nParams;
-!PERS string ipController:= "192.168.180.128";
-PERS string ipController:= "127.0.0.1"; !localhost
+PERS string ipController:= "192.168.125.1";
+!PERS string ipController:= "127.0.0.1"; !localhost
 !PERS string ipController:= "192.168.1.7"; !mlab Network
 PERS num serverPort:= 5000;
 
@@ -36,6 +36,8 @@ VAR speeddata bufferSpeeds{MAX_BUFFER};
 !//External axis position variables
 VAR extjoint externalAxis;
 
+!//Circular move buffer
+VAR robtarget circPoint;
 
 !//Correct Instruction Execution and possible return values
 VAR num ok;
@@ -106,11 +108,11 @@ PROC ServerCreateAndConnect(string ip, num port)
     SocketCreate serverSocket;
     SocketBind serverSocket, ip, port;
     SocketListen serverSocket;
-    TPWrite "SERVER: Server waiting for incomming connections ...";
+    TPWrite "SERVER: Server waiting for incoming connections ...";
     WHILE SocketGetStatus(clientSocket) <> SOCKET_CONNECTED DO
         SocketAccept serverSocket,clientSocket \ClientAddress:=clientIP \Time:=WAIT_MAX;
         IF SocketGetStatus(clientSocket) <> SOCKET_CONNECTED THEN
-            TPWrite "SERVER: Problem serving an incomming connection.";
+            TPWrite "SERVER: Problem serving an incoming connection.";
             TPWrite "SERVER: Try reconnecting.";
         ENDIF
         !//Wait 0.5 seconds for the next reconnection
@@ -131,7 +133,10 @@ PROC Initialize()
     currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[0,0,0],[1,0,0,0]]];
     currentSpeed := [100, 50, 0, 0];
     currentZone := [FALSE, 0.3, 0.3,0.3,0.03,0.3,0.03]; !z0
-	externalAxis := [9E9,9E9,9E9,9E9,9E9,9E9];
+	
+	!Find the current external axis values so they don't move when we start
+	jointsTarget := CJointT();
+	externalAxis := jointsTarget.extax;
 ENDPROC
 
 
@@ -193,10 +198,10 @@ PROC main()
                 ELSE
                     ok := SERVER_BAD_MSG;
                 ENDIF	
+				
             CASE 2: !Joint Move
                 IF nParams = 6 THEN
-                    jointsTarget:=[[params{1},params{2},params{3},params{4},params{5},params{6}],
-                                   [0, 9E9, 9E9, 9E9, 9E9, 9E9]];
+                    jointsTarget:=[[params{1},params{2},params{3},params{4},params{5},params{6}], externalAxis];
                     ok := SERVER_OK;
                     moveCompleted := FALSE;
                     MoveAbsJ jointsTarget, currentSpeed, currentZone, currentTool \Wobj:=currentWobj;
@@ -207,6 +212,7 @@ PROC main()
             CASE 3: !Get Cartesian Coordinates (with current tool and workobject)
                 IF nParams = 0 THEN
                     cartesianPose := CRobT(\Tool:=currentTool \WObj:=currentWObj);
+					
                     addString := NumToStr(cartesianPose.trans.x,2) + " ";
                     addString := addString + NumToStr(cartesianPose.trans.y,2) + " ";
                     addString := addString + NumToStr(cartesianPose.trans.z,2) + " ";
@@ -284,7 +290,6 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
-				
 			CASE 10: !Add Cartesian Coordinates to buffer
 				IF nParams = 7 THEN
 					cartesianTarget :=[[params{1},params{2},params{3}],
@@ -307,7 +312,6 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
 				ENDIF
-			
 			CASE 12: !Get Buffer Size)
 				IF nParams = 0 THEN
 					addString := NumToStr(BUFFER_POS,2);
@@ -315,7 +319,6 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
 				ENDIF
-			
 			CASE 13: !Execute moves in cartesianBuffer as linear moves
 				IF nParams = 0 THEN
 					FOR i FROM 1 TO (BUFFER_POS) DO 
@@ -324,7 +327,40 @@ PROC main()
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF	
+				ENDIF
+            CASE 14: !External Axis move
+                IF nParams = 6 THEN
+                    externalAxis :=[params{1},params{2},params{3},params{4},params{5},params{6}];
+					jointsTarget := CJointT();
+					jointsTarget.extax := externalAxis;
+                    ok := SERVER_OK;
+                    moveCompleted := FALSE;
+                    MoveAbsJ jointsTarget, currentSpeed, currentZone, currentTool \Wobj:=currentWobj;
+                    moveCompleted := TRUE;
+                ELSE
+                    ok :=SERVER_BAD_MSG;
+                ENDIF		
+			CASE 15: !Specify circPoint for circular move, and then wait on toPoint
+				IF nParams = 7 THEN
+					circPoint :=[[params{1},params{2},params{3}],
+							[params{4},params{5},params{6},params{7}],
+					  		[0,0,0,0],
+					  	  	externalAxis];
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+				ENDIF
+			CASE 16: !specify toPoint, and use circPoint specified previously
+				IF nParams = 7 THEN
+					cartesianTarget :=[[params{1},params{2},params{3}],
+						  [params{4},params{5},params{6},params{7}],
+					  	  [0,0,0,0],
+					  	  externalAxis];
+					MoveC circPoint, cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+				ENDIF
             CASE 99: !Close Connection
                 IF nParams = 0 THEN
                     TPWrite "SERVER: Client has closed connection.";
