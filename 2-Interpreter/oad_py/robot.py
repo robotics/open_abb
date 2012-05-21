@@ -14,11 +14,13 @@ message write loops are funrolled because it's slightly faster and there aren't 
 '''
 
 import socket, json, os, time
+import threading
+import collections
     
 class Robot:
     def __init__(self, IP='192.168.125.1', PORT=5000, wobj=[[0,0,0],[1,0,0,0]], tool=[[0,0,0], [1,0,0,0]], speed = [100,50,50,50], zone='z5', toolfile=None, zeroJoints = False, verbose=False):
         
-        self.BUFLEN = 4096; self.idel = .1
+        self.BUFLEN = 4096; self.idel = .01
         self.v = verbose
 
         if verbose: print 'Attempting to connect to ABB robot at', IP
@@ -73,6 +75,20 @@ class Robot:
         data = (str(self.robsock.recv(self.BUFLEN)).split(' '))
         r = [float(s) for s in data]
         return r[2:8]
+
+    def getExternalAxis(self):
+        msg = "05 #"
+        self.robsock.send(msg)
+        data = (str(self.robsock.recv(self.BUFLEN)).split(' '))
+        print data
+        r = [float(s) for s in data]
+        return r[2:8]
+
+    def getRobotInfo(self):
+        msg = "98 #"
+        self.robsock.send(msg)
+        data = (str(self.robsock.recv(self.BUFLEN))[5:].split('*'))
+        return data
 
     def setTool(self, tool=[[0,0,0], [1,0,0,0]]):
         #sets the tool object of the robot. 
@@ -262,3 +278,64 @@ class Robot:
     def __del__(self):
         try: self.close()
         except: pass
+
+class Logger:
+    def __init__(self, IP='192.168.125.1', PORT=5001, maxlen=1024, verbose=False):
+        self.IP = IP
+        self.PORT = PORT
+        self.v = verbose
+
+        self.joints = collections.deque(maxlen=maxlen)
+        self.cartesian = collections.deque(maxlen=maxlen)
+
+        self.L = threading.Lock()
+        self.active = True
+        
+        pn = threading.Thread(target=self.getNet).start()
+
+    def getNet(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((self.IP, self.PORT))
+        s.setblocking(1)
+        
+        while True:
+            with self.L:
+                if not self.active: break
+
+            data = s.recv(8192)
+            a = str(data).split(' ')
+            if self.v: print a
+            if a[1] == '0':
+                self.cartesian.appendleft([a[2:5], a[5:]])
+            elif a[1] == '1':
+                self.joints.appendleft([a[2:5], a[5:]])
+
+        #supposedly not necessary but the robot gets mad if you don't do this
+        s.shutdown(socket.SHUT_RDWR)
+        s.close()
+        
+
+    def writeData(self, jfilename='joints.txt', cfilename='cartesian.txt'):
+        fj = open(jfilename, 'w')
+        for j in self.joints:
+            for i in j[0]: fj.write(i+ ' ')
+            for i in j[1]: fj.write(i+ ' ')
+            fj.write('\n')
+        fj.close()
+
+        fc = open(cfilename, 'w')
+        for c in self.cartesian:
+            for i in c[0]: fc.write(i + ' ')
+            for i in c[1]: fc.write(i + ' ')
+            fc.write('\n')
+        fc.close()
+
+    def close(self):
+        self.stop()
+
+    def stop(self):
+        with self.L:
+            self.active=False
+
+    def __del__(self): 
+        self.stop()

@@ -17,8 +17,8 @@ VAR socketdev serverSocket;
 VAR num instructionCode;
 VAR num params{10};
 VAR num nParams;
-PERS string ipController:= "192.168.125.1";
-!PERS string ipController:= "127.0.0.1"; !localhost
+!PERS string ipController:= "192.168.125.1";
+PERS string ipController:= "127.0.0.1"; !localhost
 !PERS string ipController:= "192.168.1.7"; !mlab Network
 PERS num serverPort:= 5000;
 
@@ -237,6 +237,19 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
+			CASE 5: !Get external axis positions
+                IF nParams = 0 THEN
+                    jointsPose := CJointT();
+                    addString := StrPart(NumToStr(jointsTarget.extax.eax_a, 2),1,8) + " ";
+                    addString := addString + StrPart(NumToStr(jointsTarget.extax.eax_b,2),1,8) + " ";
+                    addString := addString + StrPart(NumToStr(jointsTarget.extax.eax_c,2),1,8) + " ";
+                    addString := addString + StrPart(NumToStr(jointsTarget.extax.eax_d,2),1,8) + " ";
+                    addString := addString + StrPart(NumToStr(jointsTarget.extax.eax_e,2),1,8) + " ";
+                    addString := addString + StrPart(NumToStr(jointsTarget.extax.eax_f,2),1,8); !End of string
+                    ok := SERVER_OK;
+                ELSE
+                    ok:=SERVER_BAD_MSG;
+                ENDIF			
             CASE 6: !Set Tool
                 IF nParams = 7 THEN
                     currentTool.tframe.trans.x:=params{1};
@@ -361,6 +374,16 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
 				ENDIF
+				
+			CASE 98: !returns serial number, robotware version, and robot type
+                IF nParams = 0 THEN
+                    addString := GetSysInfo(\SerialNo) + "*";
+                    addString := addString + GetSysInfo(\SWVersion) + "*";
+                    addString := addString + GetSysInfo(\RobotType);
+                    ok := SERVER_OK;
+                ELSE
+                    ok :=SERVER_BAD_MSG;
+                ENDIF			
             CASE 99: !Close Connection
                 IF nParams = 0 THEN
                     TPWrite "SERVER: Client has closed connection.";
