@@ -1,0 +1,32 @@
+Open ABB Driver
+---------------
+
+Driver to control an ABB robotic manipulator.
+
+Philosophy
+Start only releasing basic functionality and grow from there if necessary.
+
+Constraints:
+ - IRC5 controller.
+ - 6 DOFs robotic manipulator.
+ - Required PC Interface.
+ - Required Multitasking (for logger).
+
+Capabilities
+ - Basic configuration: Workobject, Tool, Speed, Zone.
+ - Joint, Linear and Circular moves.
+ - Buffered moves (paths). With and without speed input.
+ - Set external axis.
+ - Optional Logger. 
+
+Structure:
+ - 1. ABB Server. (RAPID)
+ - 2. Interpreter (C and Python bindings.)
+ - 3. ROS interface. (written in C++)
+
+
+Possible future addons
+- Automatic detection and recovery of collisions, though motion supervision.
+
+
+
