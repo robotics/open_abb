@@ -185,6 +185,7 @@ PROC main()
                 ELSE
                     ok := SERVER_BAD_MSG;
                 ENDIF
+
             CASE 1: !Cartesian Move
                 IF nParams = 7 THEN
                     cartesianTarget :=[[params{1},params{2},params{3}],
@@ -209,10 +210,10 @@ PROC main()
                 ELSE
                     ok :=SERVER_BAD_MSG;
                 ENDIF
+
             CASE 3: !Get Cartesian Coordinates (with current tool and workobject)
                 IF nParams = 0 THEN
-                    cartesianPose := CRobT(\Tool:=currentTool \WObj:=currentWObj);
-					
+                    cartesianPose := CRobT(\Tool:=currentTool \WObj:=currentWObj);		
                     addString := NumToStr(cartesianPose.trans.x,2) + " ";
                     addString := addString + NumToStr(cartesianPose.trans.y,2) + " ";
                     addString := addString + NumToStr(cartesianPose.trans.z,2) + " ";
@@ -224,6 +225,7 @@ PROC main()
                 ELSE
                     ok :=SERVER_BAD_MSG;
                 ENDIF
+
             CASE 4: !Get Joint Coordinates
                 IF nParams = 0 THEN
                     jointsPose := CJointT();
@@ -249,7 +251,8 @@ PROC main()
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-                ENDIF			
+                ENDIF	
+		
             CASE 6: !Set Tool
                 IF nParams = 7 THEN
                     currentTool.tframe.trans.x:=params{1};
@@ -263,6 +266,7 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
+
             CASE 7: !Specify Work Object
                 IF nParams = 7 THEN
                     currentWobj.oframe.trans.x:=params{1};
@@ -276,6 +280,7 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
+
             CASE 8: !Specify Speed of the Robot
                 IF nParams = 4 THEN
                     currentSpeed.v_tcp:=params{1};
@@ -286,6 +291,7 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
+
             CASE 9: !Specify ZoneData
                 IF nParams = 4 THEN
                     IF params{1}=1 THEN
@@ -303,79 +309,86 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
-			CASE 10: !Add Cartesian Coordinates to buffer
-				IF nParams = 7 THEN
-					cartesianTarget :=[[params{1},params{2},params{3}],
-						  [params{4},params{5},params{6},params{7}],
-					  	  [0,0,0,0],
-					  	  externalAxis];
-					IF BUFFER_POS < MAX_BUFFER THEN
-						BUFFER_POS := BUFFER_POS + 1;
-						bufferTargets{BUFFER_POS} := cartesianTarget;
-						bufferSpeeds{BUFFER_POS} := currentSpeed;
-					ENDIF
+
+            CASE 10: !Add Cartesian Coordinates to buffer
+                IF nParams = 7 THEN
+                    cartesianTarget :=[[params{1},params{2},params{3}],
+                                        [params{4},params{5},params{6},params{7}],
+                                        [0,0,0,0],
+                                        externalAxis];
+                    IF BUFFER_POS < MAX_BUFFER THEN
+                        BUFFER_POS := BUFFER_POS + 1;
+                        bufferTargets{BUFFER_POS} := cartesianTarget;
+                        bufferSpeeds{BUFFER_POS} := currentSpeed;
+                    ENDIF
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF
-			CASE 11: !Clear Cartesian Buffer
-				IF nParams = 0 THEN
-					BUFFER_POS := 0;	
+                ENDIF
+
+            CASE 11: !Clear Cartesian Buffer
+                IF nParams = 0 THEN
+                    BUFFER_POS := 0;	
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF
-			CASE 12: !Get Buffer Size)
-				IF nParams = 0 THEN
-					addString := NumToStr(BUFFER_POS,2);
+                ENDIF
+
+            CASE 12: !Get Buffer Size)
+                IF nParams = 0 THEN
+                    addString := NumToStr(BUFFER_POS,2);
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF
-			CASE 13: !Execute moves in cartesianBuffer as linear moves
-				IF nParams = 0 THEN
-					FOR i FROM 1 TO (BUFFER_POS) DO 
-						MoveL bufferTargets{i}, bufferSpeeds{i}, currentZone, currentTool \WObj:=currentWobj ;
-					ENDFOR			
+                ENDIF
+
+            CASE 13: !Execute moves in cartesianBuffer as linear moves
+                IF nParams = 0 THEN
+                    FOR i FROM 1 TO (BUFFER_POS) DO 
+                        MoveL bufferTargets{i}, bufferSpeeds{i}, currentZone, currentTool \WObj:=currentWobj ;
+                    ENDFOR			
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF
+                ENDIF
+
             CASE 14: !External Axis move
                 IF nParams = 6 THEN
                     externalAxis :=[params{1},params{2},params{3},params{4},params{5},params{6}];
-					jointsTarget := CJointT();
-					jointsTarget.extax := externalAxis;
+                    jointsTarget := CJointT();
+                    jointsTarget.extax := externalAxis;
                     ok := SERVER_OK;
                     moveCompleted := FALSE;
                     MoveAbsJ jointsTarget, currentSpeed, currentZone, currentTool \Wobj:=currentWobj;
                     moveCompleted := TRUE;
                 ELSE
                     ok :=SERVER_BAD_MSG;
-                ENDIF		
-			CASE 15: !Specify circPoint for circular move, and then wait on toPoint
-				IF nParams = 7 THEN
-					circPoint :=[[params{1},params{2},params{3}],
-							[params{4},params{5},params{6},params{7}],
-					  		[0,0,0,0],
-					  	  	externalAxis];
+                ENDIF
+
+            CASE 15: !Specify circPoint for circular move, and then wait on toPoint
+                IF nParams = 7 THEN
+                    circPoint :=[[params{1},params{2},params{3}],
+                                [params{4},params{5},params{6},params{7}],
+                                [0,0,0,0],
+                                externalAxis];
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF
-			CASE 16: !specify toPoint, and use circPoint specified previously
-				IF nParams = 7 THEN
-					cartesianTarget :=[[params{1},params{2},params{3}],
-						  [params{4},params{5},params{6},params{7}],
-					  	  [0,0,0,0],
-					  	  externalAxis];
-					MoveC circPoint, cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
+                ENDIF
+
+            CASE 16: !specify toPoint, and use circPoint specified previously
+                IF nParams = 7 THEN
+                    cartesianTarget :=[[params{1},params{2},params{3}],
+                                        [params{4},params{5},params{6},params{7}],
+                                        [0,0,0,0],
+                                        externalAxis];
+                    MoveC circPoint, cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
                     ok := SERVER_OK;
                 ELSE
                     ok:=SERVER_BAD_MSG;
-				ENDIF
+                ENDIF
 				
-			CASE 98: !returns serial number, robotware version, and robot type
+            CASE 98: !returns current robot info: serial number, robotware version, and robot type
                 IF nParams = 0 THEN
                     addString := GetSysInfo(\SerialNo) + "*";
                     addString := addString + GetSysInfo(\SWVersion) + "*";
@@ -383,7 +396,8 @@ PROC main()
                     ok := SERVER_OK;
                 ELSE
                     ok :=SERVER_BAD_MSG;
-                ENDIF			
+                ENDIF
+			
             CASE 99: !Close Connection
                 IF nParams = 0 THEN
                     TPWrite "SERVER: Client has closed connection.";
