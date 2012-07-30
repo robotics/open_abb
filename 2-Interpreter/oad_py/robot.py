@@ -21,12 +21,9 @@ class Robot:
     def __init__(self, IP='192.168.125.1', PORT=5000, wobj=[[0,0,0],[1,0,0,0]], tool=[[0,0,0], [1,0,0,0]], speed = [100,50,50,50], zone='z5', toolfile=None, zeroJoints = False, verbose=False):
         
         self.BUFLEN = 4096; self.idel = .01
+        self.remote = (IP, PORT)
         self.v = verbose
-
-        if verbose: print 'Attempting to connect to ABB robot at', IP
-        
-        self.robsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.robsock.connect((IP, PORT))
+        self.connect()
         
         if toolfile == None: self.setTool(tool)
         else: setToolFile(toolfile)
@@ -36,6 +33,11 @@ class Robot:
         self.setZone(zone)
         if zeroJoints: 
             self.setJoints()
+
+    def connect(self):        
+        if verbose: print 'Attempting to connect to ABB robot at', self.remote
+        self.robsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.robsock.connect(self.remote)
 
     def setCartesian(self, pos):
         if len(pos) == 7: pos = [pos[0:3], pos[3:7]]
@@ -196,9 +198,9 @@ class Robot:
             return data
         else:
             return False
+        
     #adds every position in posList to the buffer
     def setBuffer(self, posList, gotoFirst=False):
-       
         self.clearBuffer()
         if self.lenBuffer() <> 0: return False
         for i in posList: self.addBuffer(i)
@@ -238,6 +240,7 @@ class Robot:
             return data
         else: return False
 
+    # moves the tool centerpoint in a circular path from current position, through circlePoint, to endPoint
     def setCircular(self, circlePoint, endPoint):
         if len(circlePoint) == 7: circlePoint = [circlePoint[0:3], circlePoint[3:7]]
         if len(endPoint) == 7: endPoint = [endPoint[0:3], endPoint[3:7]]
