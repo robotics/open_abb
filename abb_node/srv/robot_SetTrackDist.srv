@@ -1,0 +1,7 @@
+# Service to Set the tracking distance of the robot while in non-blocking mode
+
+float64 pos_dist  # mm
+float64 ang_dist  # deg
+---
+int64 ret
+string msg

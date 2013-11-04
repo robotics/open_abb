@@ -1,0 +1,6 @@
+#Service to set the communication mode of the robot
+
+int64 mode  #1-Blocking; 0-Nonblocking
+---
+int64 ret
+string msg

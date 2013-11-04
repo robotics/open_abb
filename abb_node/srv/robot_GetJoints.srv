@@ -1,0 +1,11 @@
+# Service to get joint angles of the robot
+
+---
+float64 j1
+float64 j2
+float64 j3
+float64 j4
+float64 j5
+float64 j6
+int64 ret
+string msg

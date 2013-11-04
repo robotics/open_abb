@@ -1,0 +1,6 @@
+# Service to Set Joints
+float64[] position
+
+---
+int64 ret
+string msg

@@ -1,0 +1,9 @@
+<launch>
+  <group ns="abb">
+    <rosparam command="load" file="$(find abb_node)/launch/robot_params.yaml"/>
+    <node pkg="abb_node" type="abb_node" name="abb_node" output="screen"/>
+  </group>
+
+  <node pkg="tf" type="static_transform_publisher" args="0.5562828629156354 -0.33788646152444646 1.1617174295710806 -0.6951809909616878 -0.006372254964968483 0.71863376915311 0.015757220725164882 /abb_base /camera_link 1000" name="tf_camera_robot" respawn="true"/>
+  
+</launch>

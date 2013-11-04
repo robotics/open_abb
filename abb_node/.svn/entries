@@ -1,0 +1,91 @@
+10
+
+dir
+0
+https://rml.svn.beanstalkapp.com/ramp/trunk/rml/abb_node
+https://rml.svn.beanstalkapp.com/ramp
+add
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+47e54637-49ae-40ef-9979-1498f4499b3f
+
+manifest.xml
+file
+
+
+
+add
+
+lib
+dir
+
+
+
+add
+
+src
+dir
+
+
+
+add
+
+bin
+dir
+
+
+
+add
+
+srv
+dir
+
+
+
+add
+
+launch
+dir
+
+
+
+add
+
+Makefile
+file
+
+
+
+add
+
+CMakeLists.txt
+file
+
+
+
+add
+
+packages
+dir
+
+
+
+add
+

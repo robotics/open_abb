@@ -1,0 +1,7 @@
+# Service to Set the max Speed of the robot.
+
+float64 tcp  # mm/s
+float64 ori  # deg/s
+---
+int64 ret
+string msg
