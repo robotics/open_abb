@@ -223,49 +223,7 @@ string abb_comm::setSpeed(double tcp, double ori, int idCode)
   return (msg);
 }
 
-/*
-  * Deprecated: Formats message to set the zone mode of the ABB robot (distance from where to interpolate to the next destination).
-    Possible modes:
-    ---------------
-    Mode - Name in RAPID - Linear  - Orientation
-    0          fine         0 mm        0°
-    1          z0           0.3 mm      0.03°  <- Default and recommended value.
-    2          z1           1 mm        0.1°
-    3          z5           5 mm        0.8°
-    4          z10         10 mm        1.5°
-  * @param mode Mode to chose between 0-4.
-  * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
-  * @return String to be sent to ABB server.
-  
-string abb_comm::setZone(int mode,int idCode)
-{
-  switch (mode)
-    {
-    case 0:
-      return(abb_comm::setZoneManual(0, 0.0, 0.0, idCode));
-    case 1:
-      return(abb_comm::setZoneManual(1, 0.3, 0.03, idCode));
-    case 2:
-      return(abb_comm::setZoneManual(1, 1.0, 0.10, idCode));
-    case 3:
-      return(abb_comm::setZoneManual(1, 5.0, 0.80, idCode));
-    case 4:
-      return(abb_comm::setZoneManual(1, 10.0, 1.50, idCode));
-    default:
-      return(abb_comm::setZoneManual(0, 0.0, 0.0, idCode));
-    }
-    }*/
 
-/**
-  * Formats message to set the zone mode of the ABB robot (distance from where to interpolate to the next destination).
-  * @param fine Motion mode: 1 - Stop point. 0 - Fly by point.
-  * @param tcp_mm linear distance from target point to begin to interpolate the position of the TCP (recommended = 5.0mm)
-  * @param ori_mm linear distance from the target point to begin to interpolate the orientation of the TCP (recommended = 5.0mm)
-  * @param ori_deg angular distance from the target point to begin to interpolate the orientation of the TCP (recommended = 1.0deg)
-                   Hi.
-  * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
-  * @return String to be sent to ABB server.
-  */
 string abb_comm::setZone(bool fine, double tcp_mm, double ori_mm, double ori_deg, int idCode)
 {
  char buff[10];

@@ -183,7 +183,7 @@ class Robot:
         #move will execute at current speed (which you can change between addBuffer calls)
         if len(pos) == 7: pos = [pos[0:3], pos[3:7]]
         if self.checkCoordinates(pos):
-            msg = "10 " 
+            msg = "30 " 
             msg = msg + format(pos[0][0], "+08.1f") + " " + format(pos[0][1], "+08.1f") + " " + format(pos[0][2], "+08.1f") + " " 
             msg = msg + format(pos[1][0], "+08.5f") + " " + format(pos[1][1], "+08.5f") + " " 
             msg = msg + format(pos[1][2], "+08.5f") + " " + format(pos[1][3], "+08.5f") + " #"    
@@ -207,27 +207,27 @@ class Robot:
             return False
 
     def clearBuffer(self):
-        msg = "11 #"
+        msg = "31 #"
         self.robsock.send(msg)
         data = self.robsock.recv(self.BUFLEN)
         return data
 
     def lenBuffer(self):
-        msg = "12 #"
+        msg = "32 #"
         self.robsock.send(msg)
         data = str(self.robsock.recv(self.BUFLEN)).split(' ')
         return int(float(data[2]))
 
     #execute every move in buffer as MoveL command (linear move)
     def executeBuffer(self):
-        msg = "13 #"
+        msg = "33 #"
         self.robsock.send(msg)
         data = self.robsock.recv(self.BUFLEN)
         return data
 
     def setExternalAxis(self, axisValues=[-550,0,0,0,0,0]):
         if len(axisValues) == 6:
-            msg = "14 " 
+            msg = "34 " 
             msg = msg + format(axisValues[0], "+08.2f") + " " + format(axisValues[1], "+08.2f") + " " + format(axisValues[2], "+08.2f") + " " 
             msg = msg + format(axisValues[3], "+08.2f") + " " + format(axisValues[4], "+08.2f") + " " + format(axisValues[5], "+08.2f") + " #" 
             if self.v: print 'setExternalAxis:', msg
@@ -242,14 +242,14 @@ class Robot:
         if len(endPoint) == 7: endPoint = [endPoint[0:3], endPoint[3:7]]
 
         if self.checkCoordinates(circlePoint) & self.checkCoordinates(endPoint):
-            msg = "15 " 
+            msg = "35 " 
             msg = msg + format(circlePoint[0][0], "+08.1f") + " " + format(circlePoint[0][1], "+08.1f") + " " + format(circlePoint[0][2], "+08.1f") + " " 
             msg = msg + format(circlePoint[1][0], "+08.5f") + " " + format(circlePoint[1][1], "+08.5f") + " " 
             msg = msg + format(circlePoint[1][2], "+08.5f") + " " + format(circlePoint[1][3], "+08.5f") + " #"    
             self.robsock.send(msg)
             data = self.robsock.recv(self.BUFLEN)
             if data <> '15 1 ': return False
-            msg = "16 " 
+            msg = "36 " 
             msg = msg + format(endPoint[0][0], "+08.1f") + " " + format(endPoint[0][1], "+08.1f") + " " + format(endPoint[0][2], "+08.1f") + " " 
             msg = msg + format(endPoint[1][0], "+08.5f") + " " + format(endPoint[1][1], "+08.5f") + " " 
             msg = msg + format(endPoint[1][2], "+08.5f") + " " + format(endPoint[1][3], "+08.5f") + " #"    
