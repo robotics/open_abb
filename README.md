@@ -1,6 +1,8 @@
+open-abb-driver
 ==============
-open-abb-driver: Control ABB robots remotely with ROS, Python, or C++
-==============
+Control ABB robots remotely with ROS, Python, or C++
+--------------
+
 
 What is it?
 --------------
