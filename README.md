@@ -28,9 +28,8 @@ open-abb-driver consists of two main parts. The first is a program which is writ
 ** Note that you must either copy abb_node/packages/abb_comm/abb.py to your local directory or somewhere included in your PYTHONPATH environment. 
 * To set up the ROS node (Fuerte only at the moment), copy abb_node to somewhere in your $ROS_PACKAGE_PATH.
 ** If you did that correctly, try:
-     ```
-     roscd abb_node
-     rosmake abb_node
-     roslaunch abb_node abb_tf.launch
-     ```
- 
+        ```
+        roscd abb_node
+        rosmake abb_node
+        roslaunch abb_node abb_tf.launch
+        ```
