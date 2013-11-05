@@ -4,7 +4,7 @@
 
 
 ## What is it?
-open-abb-driver consists of two main parts. The first is a program which is written in the ABB robot control language, RAPID, which allows remote clients to send requests for actions (such as joint moves, cartesian moves, speed changes, etc.). The second is a series of libraries to interact with the robot from remote computers, using several different control schemes. You can use the ROS driver, which allows control using ROS services and publishers. You can also include the Python or C++ libraries to communicate with the robot directly, and bypass ROS completely. 
+open-abb-driver consists of two main parts. The first is a program which is written in the ABB robot control language, RAPID, which allows remote clients to send requests for actions (such as joint moves, cartesian moves, speed changes, etc.). The second is a series of libraries to interact with the robot from remote computers, using several different control schemes. You can use the ROS driver, which allows control using ROS services and publishers. You can also include the Python or C++ libraries to communicate with the robot directly (both located in abb_node/packages/abb_comm), and bypass ROS completely. 
 
 ## Requirements
 * ABB IRC5 controller
