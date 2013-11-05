@@ -21,6 +21,7 @@ open-abb-driver consists of two main parts. The first is a program which is writ
 * In SERVER.mod, check to make sure the "ipController" specified is the same as your robot. The default robot IP is 192.168.125.1
 * Start the programs on the robot
     * Production Window->PP to Main, then press the play button. 
+
 ### Computer Setup
 * Verify that your computer is on the same subnet as the robot.
     * Try pinging the robot (default IP is 192.168.125.1). 
