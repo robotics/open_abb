@@ -355,6 +355,10 @@ bool RobotController::robot_SetJoints(
     abb_node::robot_SetJoints::Request& req, 
     abb_node::robot_SetJoints::Response& res)
 {
+  if (req.position.size() != NUM_JOINTS)
+    {
+      return false;
+    }
   // If we are in non-blocking mode
   if (non_blocking)
   {
@@ -874,14 +878,15 @@ bool RobotController::setJoints(double position[])
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
 
-  strcpy(message, abb_comm::setJoints(position[0], 
-					    position[1],
-					    position[2],
-					    position[3],
-					    position[4],
-					    position[5],
-					    randNumber).c_str());
-
+  //ABB robots accept joint positions in degrees, so we convert from radians
+  strcpy(message, abb_comm::setJoints(position[0]*57.2957795, 
+				      position[1]*57.2957795,
+				      position[2]*57.2957795,
+				      position[3]*57.2957795,
+				      position[4]*57.2957795,
+				      position[5]*57.2957795,
+				      randNumber).c_str());
+  
   if (sendAndReceive(message, strlen(message), reply, randNumber))
   {
     // If the move was successful, keep track of the last commanded position
