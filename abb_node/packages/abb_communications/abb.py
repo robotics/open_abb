@@ -16,9 +16,9 @@ from collections import deque
 class Robot:
     def __init__(self, IP='192.168.125.1', PORT=5000, wobj=[[0,0,0],[1,0,0,0]], tool=[[0,0,0], [1,0,0,0]], speed = [100,50,50,50], zone='z5', toolfile=None, zeroJoints = False, verbose=False):
         
-        self.BUFLEN = 4096; self.idel = .01
-        self.remote = (IP, PORT)
-        self.v = verbose
+        self.BUFLEN  = 4096; self.idel = .01
+        self.remote  = (IP, PORT)
+        self.verbose = verbose
         self.connect()
         
         if toolfile == None: self.setTool(tool)
@@ -31,7 +31,7 @@ class Robot:
             self.setJoints()
 
     def connect(self):        
-        if verbose: print 'Attempting to connect to ABB robot at', self.remote
+        if self.verbose: print 'Attempting to connect to ABB robot at', self.remote
         self.robsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.robsock.connect(self.remote)
 
