@@ -24,7 +24,8 @@ VAR num instructionCode;
 VAR num params{10};
 VAR num nParams;
 
-PERS string ipController:= "192.168.125.1"; !robot default IP
+!PERS string ipController:= "192.168.125.1"; !robot default IP
+PERS string ipController:= "127.0.0.1"; !local IP for testing in simulation
 PERS num serverPort:= 5000;
 
 !//Motion of the robot
@@ -260,10 +261,10 @@ PROC main()
 		
             CASE 6: !Set Tool
                 IF nParams = 7 THEN
-					WHILE (frameMutex) DO
-						WaitTime .01; !// If the frame is being used by logger, wait here
-					ENDWHILE
-					frameMutex:= TRUE;
+		   WHILE (frameMutex) DO
+		        WaitTime .01; !// If the frame is being used by logger, wait here
+		   ENDWHILE
+		frameMutex:= TRUE;
                     currentTool.tframe.trans.x:=params{1};
                     currentTool.tframe.trans.y:=params{2};
                     currentTool.tframe.trans.z:=params{3};
@@ -272,6 +273,7 @@ PROC main()
                     currentTool.tframe.rot.q3:=params{6};
                     currentTool.tframe.rot.q4:=params{7};
                     ok := SERVER_OK;
+		    frameMutex:= FALSE;
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF

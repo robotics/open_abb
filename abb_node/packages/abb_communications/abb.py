@@ -9,308 +9,350 @@ Targets can be passed as [[XYZ], [Quats]] OR [XYZ, Quats]
 
 '''
 
-import socket, json, os, time
+import socket
+import json 
+import time
+import inspect
 import threading
 from collections import deque
+import logging
+
+log = logging.getLogger(__name__)
+log.addHandler(logging.NullHandler())
     
 class Robot:
-    def __init__(self, IP='192.168.125.1', PORT=5000, wobj=[[0,0,0],[1,0,0,0]], tool=[[0,0,0], [1,0,0,0]], speed = [100,50,50,50], zone='z5', toolfile=None, zeroJoints = False, verbose=False):
+    def __init__(self, 
+                 IP   = '192.168.125.1', 
+                 PORT = 5000):
         
-        self.BUFLEN  = 4096; self.idel = .01
+        self.BUFLEN  = 4096; 
+        self.delay   = .15
         self.remote  = (IP, PORT)
-        self.verbose = verbose
         self.connect()
         
-        if toolfile == None: self.setTool(tool)
-        else: setToolFile(toolfile)
-
-        self.setWorkObject(wobj)
-        self.setSpeed(speed)
-        self.setZone(zone)
-        if zeroJoints: 
-            self.setJoints()
+        self.set_units('millimeters', 'degrees')
+        self.set_tool()
+        self.set_workobject()
+        self.set_speed()
+        self.set_zone()
+        
+        
 
     def connect(self):        
-        if self.verbose: print 'Attempting to connect to ABB robot at', self.remote
-        self.robsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.robsock.connect(self.remote)
+        log.info('Attempting to connect to ABB robot at %s', str(self.remote))
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.settimeout(2.5)
+        self.sock.connect(self.remote)
+        log.info('Connected to ABB robot at %s', str(self.remote))
 
-    def setCartesian(self, pos):
-        if len(pos) == 7: pos = [pos[0:3], pos[3:7]]
-        if self.checkCoordinates(pos):
-            msg = "01 " 
-            msg = msg + format(pos[0][0], "+08.1f") + " " + format(pos[0][1], "+08.1f") + " " + format(pos[0][2], "+08.1f") + " " 
-            msg = msg + format(pos[1][0], "+08.5f") + " " + format(pos[1][1], "+08.5f") + " " 
-            msg = msg + format(pos[1][2], "+08.5f") + " " + format(pos[1][3], "+08.5f") + " #"    
-            if self.verbose: print 'setCartesian:', msg
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            return data
-        else:
-            return False
+    def set_units(self, linear, angular):
+        scale_l = {'millimeters': 1.0,
+                   'meters'     : 1000.0,
+                   'inches'     : 25.4}
+        scale_a = {'degrees' : 1.0,
+                   'radians' : 57.2957795}
+        self.scale_angle  = scale_a[angular]
+        self.scale_linear = scale_l[linear]
+        
+    def set_cartesian(self, pose):
+        '''
+        Executes a move immediately from the current pose,
+        to 'pose', with units of millimeters.
+        '''
+        msg  = "01 " + self.format_pose(pose)   
+        return self.send(msg)
 
-    def setJoints(self, j = [0,0,0,0,90,0]):
-        if len(j) == 6:
-            msg = "02 " 
-            msg = msg + format(j[0], "+08.2f") + " " + format(j[1], "+08.2f") + " " + format(j[2], "+08.2f") + " " 
-            msg = msg + format(j[3], "+08.2f") + " " + format(j[4], "+08.2f") + " " + format(j[5], "+08.2f") + " #" 
-            if self.verbose: print 'setJoints:', msg
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)  
-            return data
-        else: return False
+    def set_joints(self, joints):
+        '''
+        Executes a move immediately, from current joint angles,
+        to 'joints', in degrees. 
+        '''
+        if len(joints) <> 6: return False
+        msg = "02 "
+        for joint in joints: msg += format(joint*self.scale_angle, "+08.2f") + " " 
+        msg += "#" 
+        return self.send(msg)
 
-    def getCartesian(self):
+    def get_cartesian(self):
+        '''
+        Returns the current pose of the robot, in millimeters
+        '''
         msg = "03 #"
-        self.robsock.send(msg)
-        data = str(self.robsock.recv(self.BUFLEN)).split(' ')
+        data = self.send(msg).split()
         r = [float(s) for s in data]
         return [r[2:5], r[5:9]]
 
-    def getJoints(self):
+    def get_joints(self):
+        '''
+        Returns the current angles of the robots joints, in degrees. 
+        '''
         msg = "04 #"
-        self.robsock.send(msg)
-        data = (str(self.robsock.recv(self.BUFLEN)).split(' '))
-        r = [float(s) for s in data]
-        return r[2:8]
+        data = self.send(msg).split()
+        return [float(s) / self.scale_angle for s in data[2:8]]
 
-    def getExternalAxis(self):
+    def get_external_axis(self):
+        '''
+        If you have an external axis connected to your robot controller
+        (such as a FlexLifter 600, google it), this returns the joint angles
+        '''
         msg = "05 #"
-        self.robsock.send(msg)
-        data = (str(self.robsock.recv(self.BUFLEN)).split(' '))
-        print data
-        r = [float(s) for s in data]
-        return r[2:8]
-
-    def getRobotInfo(self):
+        data = self.send(msg).split()
+        return [float(s) for s in data[2:8]]
+       
+    def get_robotinfo(self):
+        '''
+        Returns a robot- unique string, with things such as the
+        robot's model number. 
+        Example output from and IRB 2400:
+        ['24-53243', 'ROBOTWARE_5.12.1021.01', '2400/16 Type B']
+        '''
         msg = "98 #"
-        self.robsock.send(msg)
-        data = (str(self.robsock.recv(self.BUFLEN))[5:].split('*'))
+        data = str(self.send(msg))[5:].split('*')
+        log.debug('get_robotinfo result: %s', str(data))
         return data
 
-    def setTool(self, tool=[[0,0,0], [1,0,0,0]]):
-        #sets the tool object of the robot. 
-        #Offsets are from tool0 (tool flange center axis/ flange face intersection)
-        if len(tool) == 7: tool = [tool[0:3], tool[3:7]]
-        if self.checkCoordinates(tool):
-            msg = "06 " 
-            msg = msg + format(tool[0][0], "+08.1f") + " " + format(tool[0][1], "+08.1f") + " " + format(tool[0][2], "+08.1f") + " " 
-            msg = msg + format(tool[1][0], "+08.5f") + " " + format(tool[1][1], "+08.5f") + " " 
-            msg = msg + format(tool[1][2], "+08.5f") + " " + format(tool[1][3], "+08.5f") + " #"    
-            if self.verbose: print 'setTool:', msg
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            self.tool = tool
-            time.sleep(self.idel)
-            return data
-        else: return False
+    def set_tool(self, tool=[[0,0,0], [1,0,0,0]]):
+        '''
+        Sets the tool object of the robot. 
+        Offsets are from tool0 (tool flange center axis/ flange face intersection)
+        '''
+        msg       = "06 " + self.format_pose(tool)    
+        self.send(msg)
+        self.tool = tool
 
-    def setToolFile(self, filename):
-        if os.path.exists(filename):
-            f = open(filename, 'rb');        
-            try: tool = json.load(f)
-            except: 
-                print 'toolfile failed to load!'
-                return False
-        else: 
-            print 'toolfile ', filename, 'doesn\'t exist'
-            return False
-        self.setTool(tool)
+    def load_json_tool(self, file_obj):
+        if file_obj.__class__.__name__ == 'str':
+            file_obj = open(filename, 'rb');
+        tool = check_coordinates(json.load(file_obj))
+        self.set_tool(tool)
         
-    def getTool(self): 
+    def get_tool(self): 
+        log.debug('get_tool returning: %s', str(self.tool))
         return self.tool
 
-    def setWorkObject(self, wobj=[[0,0,0],[1,0,0,0]]):
-        if len(wobj) == 7: pos = [wobj[0:3], wobj[3:7]]
-        if self.checkCoordinates(wobj):
-            msg = "07 " 
-            msg = msg + format(wobj[0][0], "+08.1f") + " " + format(wobj[0][1], "+08.1f") + " " + format(wobj[0][2], "+08.1f") + " " 
-            msg = msg + format(wobj[1][0], "+08.5f") + " " + format(wobj[1][1], "+08.5f") + " " 
-            msg = msg + format(wobj[1][2], "+08.5f") + " " + format(wobj[1][3], "+08.5f") + " #"    
-            if self.verbose: print 'setWorkObject:', msg
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            time.sleep(self.idel)
-            return data
-        else: return False
-            
-    #speed is [linear speed (mm/s), orientation speed (deg/s),
-    #          external axis linear, external axis orientation]
-    def setSpeed(self, speed=[100,50,50,50]):
-        if len(speed) == 4:
-            msg = "08 " 
-            msg = msg + format(speed[0], "+08.1f") + " " + format(speed[1], "+08.2f") + " "  
-            msg = msg + format(speed[2], "+08.1f") + " " + format(speed[3], "+08.2f") + " #"  
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            if self.verbose: print 'setSpeed:', msg 
-            time.sleep(self.idel)
-            return data
-        else: return False
-        
-    def setZone(self, zoneKey='z1', finep = False, manualZone=[]):
-        zoneDict = {'z0': [.3,.3,.03], 'z1': [1,1,.1], 'z5': [5,8,.8], 
-                    'z10': [10,15,1.5], 'z15': [15,23,2.3], 'z20': [20,30,3], 
-                    'z30': [30,45,4.5], 'z50': [50,75,7.5], 'z100': [100,150,15], 
+    def set_workobject(self, work_obj=[[0,0,0],[1,0,0,0]]):
+        msg = "07 " + self.format_pose(work_obj)   
+        self.send(msg)
+
+    def set_speed(self, speed=[100,50,50,50]):
+        '''
+        speed: [robot TCP linear speed (mm/s), TCP orientation speed (deg/s),
+                external axis linear, external axis orientation]
+        '''
+
+        if len(speed) <> 4: return false
+        msg = "08 " 
+        msg += format(speed[0], "+08.1f") + " " 
+        msg += format(speed[1], "+08.2f") + " "  
+        msg += format(speed[2], "+08.1f") + " " 
+        msg += format(speed[3], "+08.2f") + " #"     
+        self.send(msg)
+
+    def set_zone(self, 
+                 zone_key     = 'z1', 
+                 point_motion = False, 
+                 manual_zone  = []):
+        zone_dict = {'z0'  : [.3,.3,.03], 
+                    'z1'  : [1,1,.1], 
+                    'z5'  : [5,8,.8], 
+                    'z10' : [10,15,1.5], 
+                    'z15' : [15,23,2.3], 
+                    'z20' : [20,30,3], 
+                    'z30' : [30,45,4.5], 
+                    'z50' : [50,75,7.5], 
+                    'z100': [100,150,15], 
                     'z200': [200,300,30]}
-
-        #zoneKey: uses values from RAPID handbook (stored here in zoneDict), 'z*' 
-        #you should probably use zoneKeys
-
-        #finep: go to point exactly, and stop briefly before moving on
-
-        #manualZone = [pzone_tcp, pzone_ori, zone_ori]
-        #pzone_tcp: mm, radius from goal where robot tool center is not rigidly constrained
-        #pzone_ori: mm, radius from goal where robot tool orientation is not rigidly constrained
-        #zone_ori: degrees, zone size for the tool reorientation
-
-        if finep: zone = [0,0,0]
-        else:
-            if len(manualZone) == 3: zone = manualZone
-            elif zoneKey in zoneDict.keys(): zone = zoneDict[zoneKey]
-            else: return False 
-        msg = "09 " 
-        msg = msg + str(int(finep)) + " "
-        msg = msg + format(zone[0], "+08.4f") + " " + format(zone[1], "+08.4f") + " " + format(zone[2], "+08.4f") + " #" 
-        self.robsock.send(msg)
-        data = self.robsock.recv(self.BUFLEN)
-        if self.verbose: print 'setZone:', msg
-        time.sleep(self.idel)
-        return data
-
-    def addBuffer(self, pos):
-        #appends single target to the buffer
-        #move will execute at current speed (which you can change between addBuffer calls)
-        if len(pos) == 7: pos = [pos[0:3], pos[3:7]]
-        if self.checkCoordinates(pos):
-            msg = "30 " 
-            msg = msg + format(pos[0][0], "+08.1f") + " " + format(pos[0][1], "+08.1f") + " " + format(pos[0][2], "+08.1f") + " " 
-            msg = msg + format(pos[1][0], "+08.5f") + " " + format(pos[1][1], "+08.5f") + " " 
-            msg = msg + format(pos[1][2], "+08.5f") + " " + format(pos[1][3], "+08.5f") + " #"    
-            if self.verbose: print 'addBuffer:', msg
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            time.sleep(self.idel)
-            return data
-        else:
-            return False
+        '''
+        Sets the motion zone of the robot. This can also be thought of as
+        the flyby zone, AKA if the robot is going from point A -> B -> C,
+        how close do we have to pass by B to get to C
         
-    #adds every position in posList to the buffer
-    def setBuffer(self, posList, gotoFirst=False):
-        self.clearBuffer()
-        if self.lenBuffer() <> 0: return False
-        for i in posList: self.addBuffer(i)
-        if gotoFirst: self.setCartesian(posList[0])
-        if self.lenBuffer() == len(posList): return True
-        else: 
-            self.clearBuffer()
+        zone_key: uses values from RAPID handbook (stored here in zone_dict)
+        with keys 'z*', you should probably use these
+
+        point_motion: go to point exactly, and stop briefly before moving on
+
+        manual_zone = [pzone_tcp, pzone_ori, zone_ori]
+        pzone_tcp: mm, radius from goal where robot tool centerpoint 
+                   is not rigidly constrained
+        pzone_ori: mm, radius from goal where robot tool orientation 
+                   is not rigidly constrained
+        zone_ori: degrees, zone size for the tool reorientation
+        '''
+
+        if point_motion: 
+            zone = [0,0,0]
+        elif len(manual_zone) == 3: 
+            zone = manual_zone
+        elif zone_key in zone_dict.keys(): 
+            zone = zone_dict[zone_key]
+        else: return False
+        
+        msg = "09 " 
+        msg += str(int(point_motion)) + " "
+        msg += format(zone[0], "+08.4f") + " " 
+        msg += format(zone[1], "+08.4f") + " " 
+        msg += format(zone[2], "+08.4f") + " #" 
+        self.send(msg)
+
+    def buffer_add(self, pose):
+        '''
+        Appends single pose to the remote buffer
+        Move will execute at current speed (which you can change between buffer_add calls)
+        '''
+        msg = "30 " + self.format_pose(pose) 
+        self.send(msg)
+
+    def buffer_set(self, pose_list):
+        '''
+        Adds every pose in pose_list to the remote buffer
+        '''
+        self.clear_buffer()
+        for pose in pose_list: 
+            self.buffer_add(pose)
+        if self.buffer_len() == len(pose_list):
+            log.debug('Successfully added %i poses to remote buffer', 
+                      len(pose_list))
+            return True
+        else:
+            log.warn('Failed to add poses to remote buffer!')
+            self.clear_buffer()
             return False
 
-    def clearBuffer(self):
+    def clear_buffer(self):
         msg = "31 #"
-        self.robsock.send(msg)
-        data = self.robsock.recv(self.BUFLEN)
+        data = self.send(msg)
+        if self.buffer_len() <> 0:
+            log.warn('clear_buffer failed! buffer_len: %i', self.buffer_len())
+            raise NameError('clear_buffer failed!')
         return data
 
-    def lenBuffer(self):
+    def buffer_len(self):
+        '''
+        Returns the length (number of poses stored) of the remote buffer
+        '''
         msg = "32 #"
-        self.robsock.send(msg)
-        data = str(self.robsock.recv(self.BUFLEN)).split(' ')
+        data = self.send(msg).split()
         return int(float(data[2]))
 
-    #execute every move in buffer as MoveL command (linear move)
-    def executeBuffer(self):
+    def buffer_execute(self):
+        '''
+        Immediately execute linear moves to every pose in the remote buffer.
+        '''
         msg = "33 #"
-        self.robsock.send(msg)
-        data = self.robsock.recv(self.BUFLEN)
-        return data
+        return self.send(msg)
 
-    def setExternalAxis(self, axisValues=[-550,0,0,0,0,0]):
-        if len(axisValues) == 6:
-            msg = "34 " 
-            msg = msg + format(axisValues[0], "+08.2f") + " " + format(axisValues[1], "+08.2f") + " " + format(axisValues[2], "+08.2f") + " " 
-            msg = msg + format(axisValues[3], "+08.2f") + " " + format(axisValues[4], "+08.2f") + " " + format(axisValues[5], "+08.2f") + " #" 
-            if self.verbose: print 'setExternalAxis:', msg
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)  
-            return data
-        else: return False
+    def set_external_axis(self, axis_unscaled=[-550,0,0,0,0,0]):
+        if len(axis_values) <> 6: return False
+        msg = "34 "
+        for axis in axis_values:
+            msg += format(axis, "+08.2f") + " " 
+        msg += "#"   
+        return self.send(msg)
 
-    # moves the tool centerpoint in a circular path from current position, through circlePoint, to endPoint
-    def setCircular(self, circlePoint, endPoint):
-        if len(circlePoint) == 7: circlePoint = [circlePoint[0:3], circlePoint[3:7]]
-        if len(endPoint) == 7: endPoint = [endPoint[0:3], endPoint[3:7]]
+    def move_circular(self, pose_onarc, pose_end):
+        '''
+        Executes a movement in a circular path from current position, 
+        through pose_onarc, to pose_end
+        '''
+        msg_0 = "35 " + self.format_pose(pose_onarc)  
+        msg_1 = "36 " + self.format_pose(pose_end)
 
-        if self.checkCoordinates(circlePoint) & self.checkCoordinates(endPoint):
-            msg = "35 " 
-            msg = msg + format(circlePoint[0][0], "+08.1f") + " " + format(circlePoint[0][1], "+08.1f") + " " + format(circlePoint[0][2], "+08.1f") + " " 
-            msg = msg + format(circlePoint[1][0], "+08.5f") + " " + format(circlePoint[1][1], "+08.5f") + " " 
-            msg = msg + format(circlePoint[1][2], "+08.5f") + " " + format(circlePoint[1][3], "+08.5f") + " #"    
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            if data <> '15 1 ': return False
-            msg = "36 " 
-            msg = msg + format(endPoint[0][0], "+08.1f") + " " + format(endPoint[0][1], "+08.1f") + " " + format(endPoint[0][2], "+08.1f") + " " 
-            msg = msg + format(endPoint[1][0], "+08.5f") + " " + format(endPoint[1][1], "+08.5f") + " " 
-            msg = msg + format(endPoint[1][2], "+08.5f") + " " + format(endPoint[1][3], "+08.5f") + " #"    
-
-            self.robsock.send(msg)
-            data = self.robsock.recv(self.BUFLEN)
-            return data
-        else:
+        data = self.send(msg_0).split()
+        if data[1] <> '1': 
+            log.warn('move_circular incorrect response, bailing!')
             return False
+        return self.send(msg_1)
 
-    def checkCoordinates(self, coords):
-        try: 
-            if (len(coords) == 2):
-                if ((len(coords[0]) == 3) & (len(coords[1]) == 4)): return True
-        except: pass
-        if self.verbose: print 'Coordinate check failed on', coords
-        return False
-
+    def set_torch(self, value):
+        msg = '97 ' + str(int(bool(value))) + ' #'
+        return 
+        #return self.send(msg)
+        
+    def send(self, message, wait_for_response=True):
+        '''
+        Send a formatted message to the robot socket.
+        if wait_for_response, we wait for the response and return it
+        '''
+        caller = inspect.stack()[1][3]
+        log.debug('%-14s sending: %s', caller, message)
+        self.sock.send(message)
+        time.sleep(self.delay)
+        if not wait_for_response: return
+        data = self.sock.recv(self.BUFLEN)
+        log.debug('%-14s recieved: %s', caller, data)
+        return data
+        
+    def format_pose(self, pose):
+        pose = check_coordinates(pose)
+        msg  = ''
+        for cartesian in pose[0]:
+            msg += format(cartesian * self.scale_linear,  "+08.1f") + " " 
+        for quaternion in pose[1]:
+            msg += format(quaternion, "+08.5f") + " " 
+        msg += "#" 
+        return msg       
+        
     def close(self):
-        self.robsock.shutdown(socket.SHUT_RDWR)
-        self.robsock.close()
+        self.send("99 #", False)
+        self.sock.shutdown(socket.SHUT_RDWR)
+        self.sock.close()
+        log.info('Disconnected from ABB robot.')
 
-    def __del__(self):
-        try: self.close()
-        except: pass
+    def __enter__(self):
+        return self
+        
+    def __exit__(self, type, value, traceback):
+        self.close()
+        
+        
+def check_coordinates(coordinates):
+    if ((len(coordinates) == 2) and
+        (len(coordinates[0]) == 3) and 
+        (len(coordinates[1]) == 4)): 
+        return coordinates
+    elif (len(coordinates) == 7):
+        return [coordinates[0:3], coordinates[3:7]]
+    log.warn('Recieved malformed coordinate: %s', str(coordinates))
+    raise NameError('Malformed coordinate!')
 
+
+        
 class Logger:
-    def __init__(self, IP='192.168.125.1', PORT=5001, maxlen=1024, verbose=False):
+    def __init__(self, 
+                 IP      = '192.168.125.1', 
+                 PORT    = 5001, 
+                 max_len = 1024):
+                 
         self.IP      = IP
         self.PORT    = PORT
         self.verbose = verbose
 
-        self.joints    = deque(maxlen=maxlen)
-        self.cartesian = deque(maxlen=maxlen)
+        self.joints    = deque(maxlen=max_len)
+        self.cartesian = deque(maxlen=max_len)
         self.L = threading.Lock()
         self.active = True        
-        pn = threading.Thread(target=self.getNet).start()
+        pn = threading.Thread(target=self.get_net).start()
 
-    def getNet(self):
+    def get_net(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.IP, self.PORT))
         s.setblocking(1)
-        while True:
-            with self.L:
-                if not self.active: 
-                    break
-            data = s.recv(8192)
-            a = str(data).split(' ')
-            if self.verbose: print a
-            if a[1] == '0':   self.cartesian.appendleft([a[2:5], a[5:]])
-            elif a[1] == '1': self.joints.appendleft([a[2:5], a[5:]])
-        #supposedly not necessary but the robot gets mad if you don't do this
-        s.shutdown(socket.SHUT_RDWR)
-        s.close()
+        try:
+            while True:
+                data = s.recv(8192)
+                a = str(data).split(' ')
+                if   a[1] == '0': self.cartesian.append([a[2:5], a[5:]])
+                elif a[1] == '1': self.joints.append([a[2:5], a[5:]])
+        finally:
+            s.shutdown(socket.SHUT_RDWR)
 
-    def close(self):
-        self.stop()
-
-    def stop(self):
-        with self.L:
-            self.active=False
-
-    def __del__(self): 
-        self.stop()
+if __name__ == '__main__':
+    formatter = logging.Formatter("[%(asctime)s] %(levelname)-7s (%(filename)s:%(lineno)3s) %(message)s", "%Y-%m-%d %H:%M:%S")
+    handler_stream = logging.StreamHandler()
+    handler_stream.setFormatter(formatter)
+    handler_stream.setLevel(logging.DEBUG)
+    log = logging.getLogger('vector')
+    log.setLevel(logging.DEBUG)
+    log.addHandler(handler_stream)
+    
