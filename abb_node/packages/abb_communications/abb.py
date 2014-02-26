@@ -43,6 +43,7 @@ class Robot:
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(2.5)
         self.sock.connect(self.remote)
+        self.sock.settimeout(None)
         log.info('Connected to ABB robot at %s', str(self.remote))
 
     def set_units(self, linear, angular):
@@ -140,7 +141,7 @@ class Robot:
                 external axis linear, external axis orientation]
         '''
 
-        if len(speed) <> 4: return false
+        if len(speed) <> 4: return False
         msg = "08 " 
         msg += format(speed[0], "+08.1f") + " " 
         msg += format(speed[1], "+08.2f") + " "  
@@ -352,7 +353,7 @@ if __name__ == '__main__':
     handler_stream = logging.StreamHandler()
     handler_stream.setFormatter(formatter)
     handler_stream.setLevel(logging.DEBUG)
-    log = logging.getLogger('vector')
+    log = logging.getLogger('abb')
     log.setLevel(logging.DEBUG)
     log.addHandler(handler_stream)
     
