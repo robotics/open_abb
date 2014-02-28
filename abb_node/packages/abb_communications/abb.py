@@ -3,9 +3,9 @@ Michael Dawson-Haggerty
 
 abb.py: contains classes and support functions which interact with an ABB Robot running our software stack (RAPID code module SERVER)
 
-NOTES:
-For functions which require targets (XYZ positions with quaternion orientation):
-Targets can be passed as [[XYZ], [Quats]] OR [XYZ, Quats]
+
+For functions which require targets (XYZ positions with quaternion orientation),
+targets can be passed as [[XYZ], [Quats]] OR [XYZ, Quats]
 
 '''
 
@@ -13,7 +13,7 @@ import socket
 import json 
 import time
 import inspect
-import threading
+from threading import Thread
 from collections import deque
 import logging
 
@@ -22,38 +22,56 @@ log.addHandler(logging.NullHandler())
     
 class Robot:
     def __init__(self, 
-                 IP   = '192.168.125.1', 
-                 PORT = 5000):
-        
-        self.BUFLEN  = 4096; 
-        self.delay   = .15
-        self.remote  = (IP, PORT)
-        self.connect()
+                 ip          = '192.168.125.1', 
+                 port_motion = 5000,
+                 port_logger = 5001):
+
+        self.delay   = .08
+
+        self.connect_motion((ip, port_motion))
+        #log_thread = Thread(target = self.get_net, 
+        #                    args   = ((ip, port_logger))).start()
         
         self.set_units('millimeters', 'degrees')
         self.set_tool()
         self.set_workobject()
         self.set_speed()
         self.set_zone()
-        
-        
 
-    def connect(self):        
-        log.info('Attempting to connect to ABB robot at %s', str(self.remote))
+    def connect_motion(self, remote):        
+        log.info('Attempting to connect to robot motion server at %s', str(remote))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(2.5)
-        self.sock.connect(self.remote)
-        log.info('Connected to ABB robot at %s', str(self.remote))
+        self.sock.connect(remote)
+        self.sock.settimeout(None)
+        log.info('Connected to robot motion server at %s', str(remote))
+
+    def connect_logger(self, remote, maxlen=None):
+        self.pose   = deque(maxlen=maxlen)
+        self.joints = deque(maxlen=maxlen)
+        
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(remote)
+        s.setblocking(1)
+        try:
+            while True:
+                data = map(float, s.recv(4096).split())
+                result = 
+                if   int(data[1]) == 0: 
+                    self.pose.append([data[2:5], data[5:]])
+                #elif int(data[1]) == 1: self.joints.append([a[2:5], a[5:]])
+        finally:
+            s.shutdown(socket.SHUT_RDWR)
 
     def set_units(self, linear, angular):
-        scale_l = {'millimeters': 1.0,
+        units_l = {'millimeters': 1.0,
                    'meters'     : 1000.0,
                    'inches'     : 25.4}
-        scale_a = {'degrees' : 1.0,
+        units_a = {'degrees' : 1.0,
                    'radians' : 57.2957795}
-        self.scale_angle  = scale_a[angular]
-        self.scale_linear = scale_l[linear]
-        
+        self.scale_linear = units_l[linear]
+        self.scale_angle  = units_a[angular]
+
     def set_cartesian(self, pose):
         '''
         Executes a move immediately from the current pose,
@@ -113,8 +131,12 @@ class Robot:
 
     def set_tool(self, tool=[[0,0,0], [1,0,0,0]]):
         '''
-        Sets the tool object of the robot. 
-        Offsets are from tool0 (tool flange center axis/ flange face intersection)
+        Sets the tool centerpoint (TCP) of the robot. 
+        When you command a cartesian move, 
+        it aligns the TCP frame with the requested frame.
+        
+        Offsets are from tool0, which is defined at the intersection of the
+        tool flange center axis and the flange face.
         '''
         msg       = "06 " + self.format_pose(tool)    
         self.send(msg)
@@ -131,6 +153,10 @@ class Robot:
         return self.tool
 
     def set_workobject(self, work_obj=[[0,0,0],[1,0,0,0]]):
+        '''
+        The workobject is a local coordinate frame you can define on the robot,
+        then subsequent cartesian moves will be in this coordinate frame. 
+        '''
         msg = "07 " + self.format_pose(work_obj)   
         self.send(msg)
 
@@ -140,7 +166,7 @@ class Robot:
                 external axis linear, external axis orientation]
         '''
 
-        if len(speed) <> 4: return false
+        if len(speed) <> 4: return False
         msg = "08 " 
         msg += format(speed[0], "+08.1f") + " " 
         msg += format(speed[1], "+08.2f") + " "  
@@ -264,7 +290,12 @@ class Robot:
             return False
         return self.send(msg_1)
 
-    def set_torch(self, value):
+    def set_dio(self, value, id=0):
+        '''
+        A function to set a physical DIO line on the robot.
+        For this to work you're going to need to edit the RAPID function
+        and fill in the DIO you want this to switch. 
+        '''
         msg = '97 ' + str(int(bool(value))) + ' #'
         return 
         #return self.send(msg)
@@ -279,7 +310,7 @@ class Robot:
         self.sock.send(message)
         time.sleep(self.delay)
         if not wait_for_response: return
-        data = self.sock.recv(self.BUFLEN)
+        data = self.sock.recv(4096)
         log.debug('%-14s recieved: %s', caller, data)
         return data
         
@@ -304,8 +335,7 @@ class Robot:
         
     def __exit__(self, type, value, traceback):
         self.close()
-        
-        
+
 def check_coordinates(coordinates):
     if ((len(coordinates) == 2) and
         (len(coordinates[0]) == 3) and 
@@ -316,43 +346,12 @@ def check_coordinates(coordinates):
     log.warn('Recieved malformed coordinate: %s', str(coordinates))
     raise NameError('Malformed coordinate!')
 
-
-        
-class Logger:
-    def __init__(self, 
-                 IP      = '192.168.125.1', 
-                 PORT    = 5001, 
-                 max_len = 1024):
-                 
-        self.IP      = IP
-        self.PORT    = PORT
-        self.verbose = verbose
-
-        self.joints    = deque(maxlen=max_len)
-        self.cartesian = deque(maxlen=max_len)
-        self.L = threading.Lock()
-        self.active = True        
-        pn = threading.Thread(target=self.get_net).start()
-
-    def get_net(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((self.IP, self.PORT))
-        s.setblocking(1)
-        try:
-            while True:
-                data = s.recv(8192)
-                a = str(data).split(' ')
-                if   a[1] == '0': self.cartesian.append([a[2:5], a[5:]])
-                elif a[1] == '1': self.joints.append([a[2:5], a[5:]])
-        finally:
-            s.shutdown(socket.SHUT_RDWR)
-
 if __name__ == '__main__':
     formatter = logging.Formatter("[%(asctime)s] %(levelname)-7s (%(filename)s:%(lineno)3s) %(message)s", "%Y-%m-%d %H:%M:%S")
     handler_stream = logging.StreamHandler()
     handler_stream.setFormatter(formatter)
     handler_stream.setLevel(logging.DEBUG)
-    log = logging.getLogger('vector')
+    log = logging.getLogger('abb')
     log.setLevel(logging.DEBUG)
     log.addHandler(handler_stream)
     
