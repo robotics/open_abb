@@ -1,6 +1,12 @@
 #if !defined(POLYNOM_INCLUDED)
 #define POLYNOM_INCLUDED
 
+namespace open_abb_driver
+{
+
+namespace matvec
+{
+	
 class Polynom : public Vec
 {
 public:
@@ -31,5 +37,9 @@ public:
 	int degree() const;
 	void interpolate(const Vec &x, const Vec &y, const int n);
 };
+
+}
+
+}
 
 #endif	// !defined(POLYNOM_INCLUDED)

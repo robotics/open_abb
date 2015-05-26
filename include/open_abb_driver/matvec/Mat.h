@@ -2,7 +2,12 @@
 #define MAT_INCLUDED
 
 #include <iostream>
+namespace open_abb_driver
+{
 
+namespace matvec
+{
+		
 class Mat
 {
 public:
@@ -76,5 +81,9 @@ public:
 	double PYTHAG(double a, double b) const; //For SVD decomposition
 
 };
+
+}
+
+}
 
 #endif	// !defined(MAT_INCLUDED)

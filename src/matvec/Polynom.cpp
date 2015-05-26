@@ -1,9 +1,15 @@
 #include <math.h>
 
-#include "Vec.h"
-#include "Mat.h"
-#include "Polynom.h"
+#include "open_abb_driver/matvec/Vec.h"
+#include "open_abb_driver/matvec/Mat.h"
+#include "open_abb_driver/matvec/Polynom.h"
 
+namespace open_abb_driver
+{
+	
+namespace matvec
+{
+	
 Polynom::Polynom() : Vec() {}
 
 Polynom::Polynom(const int n) : Vec(n+1) {} 	
@@ -131,3 +137,6 @@ void Polynom::interpolate(const Vec &x, const Vec &y, const int n)
 	}
 } 
 
+}
+
+}

@@ -1,7 +1,12 @@
 #if !defined(ROTMAT_INCLUDED)
 #define ROTMAT_INCLUDED
 
+namespace open_abb_driver
+{
 
+namespace matvec
+{
+	
 class Quaternion;
 
 class RotMat: public Mat
@@ -43,5 +48,9 @@ public:
 
 	RotMat inv() const;	// Inverse computation redefinition.
 };
+
+}
+
+}
 
 #endif	// !defined(ROTMAT_INCLUDED)

@@ -16,6 +16,12 @@
 #define MAX(a,b) (a > b ? a:b)
 #define MIN(a,b) (a < b ? a:b)
 
+namespace open_abb_driver
+{
+
+namespace matvec
+{
+
 class Vec
 {
 public:
@@ -326,5 +332,10 @@ public:
 	int degree() const;
 	void interpolate(const Vec &x, const Vec &y, const int n);
 };
+
+}
+
+	
+}
 
 #endif	// !defined(POLYNOM_INCLUDED)

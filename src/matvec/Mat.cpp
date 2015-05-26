@@ -2,10 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Vec.h"
-#include "Mat.h"
+#include "open_abb_driver/matvec/Vec.h"
+#include "open_abb_driver/matvec/Mat.h"
 
-
+namespace open_abb_driver
+{
+	
+namespace matvec
+{
+	
 /** \brief Default constructor.
  *         Zero-size matrix.
  *
@@ -1167,4 +1172,8 @@ int Mat::SVD(Mat &U, Vec &sigma, Mat &V) const
     }
     free((void*) rv1);
     return(1);
+}
+
+}
+
 }

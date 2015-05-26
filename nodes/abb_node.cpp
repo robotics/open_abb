@@ -8,11 +8,14 @@
 // and non-blocking moves.
 //
 
-#include "abb_node.h"
+#include "open_abb_driver/abb_node.h"
 
 /////////////////////////////////
 // BEGIN RobotController Class //
 /////////////////////////////////
+
+namespace open_abb_driver
+{
 
 RobotController::RobotController(ros::NodeHandle *n) 
 {
@@ -44,7 +47,7 @@ RobotController::~RobotController() {
 
   //Close connections
   char message[MAX_BUFFER];
-  strcpy(message, abb_comm::closeConnection().c_str());
+  strcpy(message, ABBComm::closeConnection().c_str());
   send(robotMotionSocket, message, strlen(message), 0);
   ros::Duration(1.0).sleep();
   close(robotMotionSocket);
@@ -92,11 +95,11 @@ bool RobotController::init()
   changing_nb_speed = false;
 
   // Allocate space for all of our vectors
-  curToolP = Vec(3);
-  curWorkP = Vec(3);
-  curP = Vec(3);
-  curGoalP = Vec(3);
-  curTargP = Vec(3);
+  curToolP = matvec::Vec(3);
+  curWorkP = matvec::Vec(3);
+  curP = matvec::Vec(3);
+  curGoalP = matvec::Vec(3);
+  curTargP = matvec::Vec(3);
 
   // Set the Default Robot Configuration
   ROS_INFO("ROBOT_CONTROLLER: Setting robot default configuration...");
@@ -222,8 +225,8 @@ void RobotController::advertiseServices()
 //////////////////////////////////////////////////////////////////////////////
 
 // Simply pings the robot and makes sure we can still communicate with it
-bool RobotController::robot_Ping(abb_node::robot_Ping::Request& req, 
-    abb_node::robot_Ping::Response& res)
+bool RobotController::robot_Ping(open_abb_driver::robot_Ping::Request& req, 
+    open_abb_driver::robot_Ping::Response& res)
 {
   if (ping())
   {
@@ -244,8 +247,8 @@ bool RobotController::robot_Ping(abb_node::robot_Ping::Request& req,
 // thread handle the actual moving. If we are in blocking mode, we then 
 // communicate with the robot to execute the move.
 bool RobotController::robot_SetCartesian(
-    abb_node::robot_SetCartesian::Request& req, 
-    abb_node::robot_SetCartesian::Response& res)
+    open_abb_driver::robot_SetCartesian::Request& req, 
+    open_abb_driver::robot_SetCartesian::Response& res)
 {
   /*
   ROS_INFO("CMD: %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, mag = %f", 
@@ -326,8 +329,8 @@ bool RobotController::robot_SetCartesian(
 
 // Queries the cartesian position of the robot
 bool RobotController::robot_GetCartesian(
-    abb_node::robot_GetCartesian::Request& req, 
-    abb_node::robot_GetCartesian::Response& res)
+    open_abb_driver::robot_GetCartesian::Request& req, 
+    open_abb_driver::robot_GetCartesian::Response& res)
 {
   // Simply call our internal method to communicate with the robot and get
   // the cartesian position
@@ -352,8 +355,8 @@ bool RobotController::robot_GetCartesian(
 // thread handle the actual moving. If we are in blocking mode, we then 
 // communicate with the robot to execute the move.
 bool RobotController::robot_SetJoints(
-    abb_node::robot_SetJoints::Request& req, 
-    abb_node::robot_SetJoints::Response& res)
+    open_abb_driver::robot_SetJoints::Request& req, 
+    open_abb_driver::robot_SetJoints::Response& res)
 {
   if (req.position.size() != NUM_JOINTS)
     {
@@ -430,8 +433,8 @@ bool RobotController::robot_SetJoints(
 
 // Query the robot for the current position of its joints
 bool RobotController::robot_GetJoints(
-    abb_node::robot_GetJoints::Request& req, 
-    abb_node::robot_GetJoints::Response& res)
+    open_abb_driver::robot_GetJoints::Request& req, 
+    open_abb_driver::robot_GetJoints::Response& res)
 {
   // Simply call our internal method to get the current position of the robot
   if (getJoints(res.j1, res.j2, res.j3, res.j4, res.j5, res.j6))
@@ -451,8 +454,8 @@ bool RobotController::robot_GetJoints(
 
 // If the robot is in non-blocking mode, stop the robot
 bool RobotController::robot_Stop(
-    abb_node::robot_Stop::Request& req, 
-    abb_node::robot_Stop::Response& res)
+    open_abb_driver::robot_Stop::Request& req, 
+    open_abb_driver::robot_Stop::Response& res)
 {
   // If we are currently blocking, there's nothing to stop
   if(!non_blocking)
@@ -476,8 +479,8 @@ bool RobotController::robot_Stop(
 
 // Set the tool frame of the robot
 bool RobotController::robot_SetTool(
-    abb_node::robot_SetTool::Request& req, 
-    abb_node::robot_SetTool::Response& res)
+    open_abb_driver::robot_SetTool::Request& req, 
+    open_abb_driver::robot_SetTool::Response& res)
 {
   // Simply call our internal method to set the tool
   if (setTool(req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz))
@@ -496,8 +499,8 @@ bool RobotController::robot_SetTool(
 
 // Set the work object of the robot
 bool RobotController::robot_SetWorkObject(
-    abb_node::robot_SetWorkObject::Request& req, 
-    abb_node::robot_SetWorkObject::Response& res)
+    open_abb_driver::robot_SetWorkObject::Request& req, 
+    open_abb_driver::robot_SetWorkObject::Response& res)
 {
   // Simply call our internal method to set the work object
   if(setWorkObject(req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz))
@@ -518,8 +521,8 @@ bool RobotController::robot_SetWorkObject(
 
 // Set the communication mode of our robot
 bool RobotController::robot_SetComm(
-    abb_node::robot_SetComm::Request& req, 
-    abb_node::robot_SetComm::Response& res)
+    open_abb_driver::robot_SetComm::Request& req, 
+    open_abb_driver::robot_SetComm::Response& res)
 {
   if (req.mode == NON_BLOCKING)
   {
@@ -566,8 +569,8 @@ bool RobotController::robot_SetComm(
 // call a separate method which sets step sizes in addition to speed.
 // Otherwise, we just call our generic setSpeed method.
 bool RobotController::robot_SetSpeed(
-    abb_node::robot_SetSpeed::Request& req, 
-    abb_node::robot_SetSpeed::Response& res)
+    open_abb_driver::robot_SetSpeed::Request& req, 
+    open_abb_driver::robot_SetSpeed::Response& res)
 {
   if (non_blocking)
   {
@@ -594,8 +597,8 @@ bool RobotController::robot_SetSpeed(
 // Set the zone of the robot. This is the distance before the end of a motion 
 // that the server will respond. This enables smooth motions.
 bool RobotController::robot_SetZone(
-    abb_node::robot_SetZone::Request& req, 
-    abb_node::robot_SetZone::Response& res)
+    open_abb_driver::robot_SetZone::Request& req, 
+    open_abb_driver::robot_SetZone::Response& res)
 {
   // Simply call our internal setZone method
   if (setZone(req.mode))
@@ -613,8 +616,8 @@ bool RobotController::robot_SetZone(
 }
 
 bool RobotController::robot_SetTrackDist(
-    abb_node::robot_SetTrackDist::Request& req,
-    abb_node::robot_SetTrackDist::Response& res)
+    open_abb_driver::robot_SetTrackDist::Request& req,
+    open_abb_driver::robot_SetTrackDist::Response& res)
 {
   if (!non_blocking)
   {
@@ -639,8 +642,8 @@ bool RobotController::robot_SetTrackDist(
 
 // Execute Special Command
 bool RobotController::robot_SpecialCommand(
-    abb_node::robot_SpecialCommand::Request& req, 
-    abb_node::robot_SpecialCommand::Response& res)
+    open_abb_driver::robot_SpecialCommand::Request& req, 
+    open_abb_driver::robot_SpecialCommand::Response& res)
 {
   // Simply call our internal method
   if (specialCommand(req.command, req.param1, req.param2, req.param3, req.param4, req.param5))
@@ -659,8 +662,8 @@ bool RobotController::robot_SpecialCommand(
 
 // Turn the Vacuum on or off on the robot
 bool RobotController::robot_SetVacuum(
-    abb_node::robot_SetVacuum::Request& req, 
-    abb_node::robot_SetVacuum::Response& res)
+    open_abb_driver::robot_SetVacuum::Request& req, 
+    open_abb_driver::robot_SetVacuum::Response& res)
 {
   // Simply call our internal method
   if (setVacuum(req.vacuum))
@@ -680,8 +683,8 @@ bool RobotController::robot_SetVacuum(
 
 // Lock/Unlock tool changer
 bool RobotController::robot_SetDIO(
-				   abb_node::robot_SetDIO::Request& req, 
-				   abb_node::robot_SetDIO::Response& res)
+				   open_abb_driver::robot_SetDIO::Request& req, 
+				   open_abb_driver::robot_SetDIO::Response& res)
 {
   // Simply call our internal method
   if (setDIO(req.DIO_num, req.state))
@@ -743,8 +746,8 @@ bool RobotController::setTrackDist(double pos_dist, double ang_dist)
 }
 
 bool RobotController::robot_IsMoving(
-    abb_node::robot_IsMoving::Request& req, 
-    abb_node::robot_IsMoving::Response& res)
+    open_abb_driver::robot_IsMoving::Request& req, 
+    open_abb_driver::robot_IsMoving::Response& res)
 {
   res.moving = is_moving();
 
@@ -805,7 +808,7 @@ bool RobotController::ping()
   char message[MAX_BUFFER];
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-  strcpy(message, abb_comm::pingRobot(randNumber).c_str());
+  strcpy(message, ABBComm::pingRobot(randNumber).c_str());
 
   if(sendAndReceive(message, strlen(message), reply, randNumber))
     return true;
@@ -829,7 +832,7 @@ bool RobotController::setCartesian(double x, double y, double z,
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
 
-  strcpy(message, abb_comm::setCartesian(x, y, z, q0, qx, qy, qz, 
+  strcpy(message, ABBComm::setCartesian(x, y, z, q0, qx, qy, qz, 
         randNumber).c_str());
 
   if (sendAndReceive(message, strlen(message), reply, randNumber))
@@ -855,12 +858,12 @@ bool RobotController::getCartesian(double &x, double &y, double &z,
   char message[MAX_BUFFER];
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-  strcpy(message, abb_comm::getCartesian(randNumber).c_str());
+  strcpy(message, ABBComm::getCartesian(randNumber).c_str());
   
   if(sendAndReceive(message, strlen(message), reply, randNumber))
     {
       // Parse the reply to get the cartesian coordinates
-      abb_comm::parseCartesian(reply, &x, &y, &z, &q0, &qx, &qy, &qz);
+      ABBComm::parseCartesian(reply, &x, &y, &z, &q0, &qx, &qy, &qz);
       return true;
     }
   else
@@ -879,7 +882,7 @@ bool RobotController::setJoints(double position[])
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
 
   //ABB robots accept joint positions in degrees, so we convert from radians
-  strcpy(message, abb_comm::setJoints(position[0]*57.2957795, 
+  strcpy(message, ABBComm::setJoints(position[0]*57.2957795, 
 				      position[1]*57.2957795,
 				      position[2]*57.2957795,
 				      position[3]*57.2957795,
@@ -907,12 +910,12 @@ bool RobotController::getJoints(double &j1, double &j2, double &j3,
   char message[MAX_BUFFER];
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-  strcpy(message, abb_comm::getJoints(randNumber).c_str());
+  strcpy(message, ABBComm::getJoints(randNumber).c_str());
 
   if(sendAndReceive(message, strlen(message), reply, randNumber))
   {
     // Parse the reply to get the joint angles
-    abb_comm::parseJoints(reply, &j1, &j2, &j3, &j4, &j5, &j6);
+    ABBComm::parseJoints(reply, &j1, &j2, &j3, &j4, &j5, &j6);
     return true;
   }
   else
@@ -964,7 +967,7 @@ bool RobotController::setTool(double x, double y, double z,
       char message[MAX_BUFFER];
       char reply[MAX_BUFFER];
       int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-      strcpy(message, abb_comm::setTool(x, y, z, q0, qx, qy, qz, 
+      strcpy(message, ABBComm::setTool(x, y, z, q0, qx, qy, qz, 
 					      randNumber).c_str());
 
       if(sendAndReceive(message, strlen(message), reply, randNumber))
@@ -1008,7 +1011,7 @@ bool RobotController::setWorkObject(double x, double y, double z,
       char message[MAX_BUFFER];
       char reply[MAX_BUFFER];
       int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-      strcpy(message, abb_comm::setWorkObject(x, y, z, q0, qx, qy, qz, 
+      strcpy(message, ABBComm::setWorkObject(x, y, z, q0, qx, qy, qz, 
 						    randNumber).c_str());
       
       if(sendAndReceive(message, strlen(message), reply, randNumber))
@@ -1060,7 +1063,7 @@ bool RobotController::setSpeed(double tcp, double ori)
       char message[MAX_BUFFER];
       char reply[MAX_BUFFER];
       int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-      strcpy(message, abb_comm::setSpeed(tcp, ori, 
+      strcpy(message, ABBComm::setSpeed(tcp, ori, 
 					       randNumber).c_str());
       if(sendAndReceive(message, strlen(message), reply, randNumber))
 	{
@@ -1099,7 +1102,7 @@ bool RobotController::setZone(int z)
 	  return false;
 	}
       
-      strcpy(message, abb_comm::setZone((z == ZONE_FINE), 
+      strcpy(message, ABBComm::setZone((z == ZONE_FINE), 
 					      zone_data[z].p_tcp, zone_data[z].p_ori, zone_data[z].ori, 
 					      randNumber).c_str());
       
@@ -1123,7 +1126,7 @@ bool RobotController::specialCommand(int command, double param1, double param2, 
   char message[MAX_BUFFER];
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-  strcpy(message, abb_comm::specialCommand(command, param1, param2, param3, param4, param5, randNumber).c_str());
+  strcpy(message, ABBComm::specialCommand(command, param1, param2, param3, param4, param5, randNumber).c_str());
 
   if(sendAndReceive(message, strlen(message), reply, randNumber))
     return true;
@@ -1149,7 +1152,7 @@ bool RobotController::setVacuum(int v)
 	  return false;
 	}
       
-      strcpy(message, abb_comm::setVacuum(v, randNumber).c_str());
+      strcpy(message, ABBComm::setVacuum(v, randNumber).c_str());
       
       if(sendAndReceive(message, strlen(message), reply, randNumber))
 	{
@@ -1171,7 +1174,7 @@ bool RobotController::setDIO(int dio_num, int dio_state)
   char message[MAX_BUFFER];
   char reply[MAX_BUFFER];
   int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-  strcpy(message, abb_comm::setDIO(dio_num, dio_state, randNumber).c_str());
+  strcpy(message, ABBComm::setDIO(dio_num, dio_state, randNumber).c_str());
   if(sendAndReceive(message, strlen(message), reply, randNumber))
     { return true; }
   else 
@@ -1367,7 +1370,7 @@ double RobotController::orientDistFromGoal()
   pthread_mutex_lock(&cartUpdateMutex);
   //Quaternion diff = Quaternion("1 0 0 0") - (curGoalQ - curQ);
   //diff /= diff.norm();
-  Quaternion diff = curGoalQ^(curQ.inverse());
+  matvec::Quaternion diff = curGoalQ^(curQ.inverse());
   pthread_mutex_unlock(&cartUpdateMutex);
   double ang_mag = fabs(diff.getAngle());
   return ang_mag;
@@ -1645,7 +1648,7 @@ void *nonBlockMain(void *args)
         // Read in the current cartesian target, and don't use it again
         // for this iteration in case it changed in between
         pthread_mutex_lock (&nonBlockMutex);
-        HomogTransf target(robot->curTargQ.getRotMat(), robot->curTargP);
+        matvec::HomogTransf target(robot->curTargQ.getRotMat(), robot->curTargP);
         robot->targetChanged = false;
         /*ROS_INFO("Target: %f, %f, %f", robot->curTargP[0], 
             robot->curTargP[1], robot->curTargP[2]);*/
@@ -1653,12 +1656,12 @@ void *nonBlockMain(void *args)
 
         // Get the last goal position, and find the 
         // difference between here and our target
-        HomogTransf pos(robot->curGoalQ.getRotMat(), robot->curGoalP);
-        HomogTransf diff = (pos.inv())*target;
+        matvec::HomogTransf pos(robot->curGoalQ.getRotMat(), robot->curGoalP);
+        matvec::HomogTransf diff = (pos.inv())*target;
         
         // Get the orientation and translational change
-        Vec diffV = diff.getTranslation();
-        Quaternion diffQ = diff.getRotation().getQuaternion();
+        matvec::Vec diffV = diff.getTranslation();
+        matvec::Quaternion diffQ = diff.getRotation().getQuaternion();
         diffQ /= diffQ.norm();
 
         // Compute the magnitude of each change
@@ -1719,8 +1722,8 @@ void *nonBlockMain(void *args)
 
         // Now that we have computed the magnitude of our steps, compute
         // the actual translation and rotation to do for this step
-        Vec incTrans(3);
-        Quaternion incRot("1 0 0 0");
+        matvec::Vec incTrans(3);
+        matvec::Quaternion incRot("1 0 0 0");
 
         if (!reachedGoal)
         {
@@ -1733,8 +1736,8 @@ void *nonBlockMain(void *args)
           // rotation, and scale by the magnitude for the current step
           if (rotMag > 0)
           {
-            incRot = Quaternion("1 0 0 0") + 
-               (diffQ - Quaternion("1 0 0 0")) * angDist / rotMag;
+            incRot = matvec::Quaternion("1 0 0 0") + 
+               (diffQ - matvec::Quaternion("1 0 0 0")) * angDist / rotMag;
 
             // Make sure that we renormalize our quaternion
             incRot /= incRot.norm();
@@ -1750,11 +1753,11 @@ void *nonBlockMain(void *args)
 
         // Now form homogeneous matrices to calculate the resulting 
         // position and orientation from this step
-        HomogTransf incStep(incRot.getRotMat(), incTrans);
-        HomogTransf newGoal = pos * incStep;
+        matvec::HomogTransf incStep(incRot.getRotMat(), incTrans);
+        matvec::HomogTransf newGoal = pos * incStep;
 
-        Vec newGoalV = newGoal.getTranslation();
-        Quaternion newGoalQ = newGoal.getRotation().getQuaternion();
+        matvec::Vec newGoalV = newGoal.getTranslation();
+        matvec::Quaternion newGoalQ = newGoal.getRotation().getQuaternion();
 
         // Wait here until we're within range to last commanded goal
 	ros::Rate check_rate(DIST_CHECK_FREQ);
@@ -1881,8 +1884,9 @@ void *nonBlockMain(void *args)
   pthread_exit((void*) 0);
 }
 
+}
 
-
+using namespace open_abb_driver;
 //////////////////////////////////////////////////////////////////////////////
 // Main Loop for Robot Node
 //

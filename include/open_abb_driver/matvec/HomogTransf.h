@@ -1,6 +1,12 @@
 #if !defined(HOMOGTRANSF_INCLUDED)
 #define HOMOGTRANSF_INCLUDED
 
+namespace open_abb_driver
+{
+
+namespace matvec
+{
+	
 class HomogTransf : public Mat
 {
 public:
@@ -40,5 +46,9 @@ public:
 	HomogTransf inv() const;
 	
 };
+
+}
+	
+}
 
 #endif	// !defined(HOMOGTRANSF_INCLUDED)

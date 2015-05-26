@@ -1,10 +1,16 @@
 #include <math.h>
 
-#include "Vec.h"
-#include "Mat.h"
-#include "RotMat.h"
-#include "Quaternion.h"
+#include "open_abb_driver/matvec/Vec.h"
+#include "open_abb_driver/matvec/Mat.h"
+#include "open_abb_driver/matvec/RotMat.h"
+#include "open_abb_driver/matvec/Quaternion.h"
 
+namespace open_abb_driver
+{
+	
+namespace matvec
+{
+	
 Quaternion::Quaternion() : Vec(4) {}
 
 Quaternion::Quaternion(const double constant) : Vec(constant,4) {}
@@ -162,4 +168,8 @@ RotMat Quaternion::getRotMat()const
 	w[2][1]=2*(v[2]*v[3]+v[0]*v[1]);
 	w[2][2]=v[0]*v[0]-v[1]*v[1]-v[2]*v[2]+v[3]*v[3];
 	return w;
+}
+
+}
+
 }

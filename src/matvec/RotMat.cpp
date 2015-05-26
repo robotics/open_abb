@@ -1,10 +1,16 @@
 #include <math.h>
 
-#include "Vec.h"
-#include "Mat.h"
-#include "Quaternion.h"
-#include "RotMat.h"
+#include "open_abb_driver/matvec/Vec.h"
+#include "open_abb_driver/matvec/Mat.h"
+#include "open_abb_driver/matvec/Quaternion.h"
+#include "open_abb_driver/matvec/RotMat.h"
 
+namespace open_abb_driver
+{
+	
+namespace matvec
+{
+	
 RotMat::RotMat() : Mat(0.0,3,3)
 {
 	for(int i=0;i<3;i++) v[i][i]=1.0;
@@ -251,4 +257,8 @@ RotMat RotMat::inv() const
 // Instead of using the standard inv() command from Mat, it computes the transpose
 {
   return(this->transp());
+}
+
+}
+
 }

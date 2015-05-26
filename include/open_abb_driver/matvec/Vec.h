@@ -16,6 +16,12 @@
 #define MAX(a,b) (a > b ? a:b)
 #define MIN(a,b) (a < b ? a:b)
 
+namespace open_abb_driver
+{
+
+namespace matvec
+{
+	
 class Vec
 {
 public:
@@ -70,5 +76,9 @@ public:
 	double variance() const;
 	double stdev() const;
 };
+
+}
+
+}
 
 #endif	// !defined(VEC_INCLUDED)

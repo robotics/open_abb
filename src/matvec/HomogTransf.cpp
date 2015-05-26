@@ -1,9 +1,15 @@
 #include <math.h>
 
-#include "Vec.h"
-#include "Mat.h"
-#include "RotMat.h"
-#include "HomogTransf.h"
+#include "open_abb_driver/matvec/Vec.h"
+#include "open_abb_driver/matvec/Mat.h"
+#include "open_abb_driver/matvec/RotMat.h"
+#include "open_abb_driver/matvec/HomogTransf.h"
+
+namespace open_abb_driver
+{
+	
+namespace matvec
+{
 
 HomogTransf::HomogTransf() : Mat(0.0,4,4)
 {
@@ -134,4 +140,8 @@ HomogTransf HomogTransf::inv() const
 	h[3][0] = 0.0;		h[3][1] = 0.0;		h[3][2] = 0.0;     h[3][3] = 1.0;
 
 	return h;
+}
+
+}
+
 }

@@ -1,6 +1,11 @@
 #if !defined(QUATERNION_INCLUDED)
 #define QUATERNION_INCLUDED
 
+namespace open_abb_driver
+{
+
+namespace matvec
+{
 
 //class Vec;
 class RotMat;
@@ -46,5 +51,10 @@ public:
 	Vec getAxis() const;
 	RotMat getRotMat() const;
 };
+
+}
+
+	
+}
 
 #endif	// !defined(QUATERNION_INCLUDED)

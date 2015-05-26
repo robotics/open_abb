@@ -2,9 +2,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Vec.h"
+#include "open_abb_driver/matvec/Vec.h"
 //#include "Mat.h"
 
+namespace open_abb_driver
+{
+	
+namespace matvec
+{
+	
 Vec::Vec()
 {
 	nn=0;
@@ -485,4 +491,8 @@ Vec::~Vec(void)
 {
 	if (v != 0)
 		delete[] (v);
+}
+
+}
+
 }

@@ -9,28 +9,28 @@
 #include <sys/socket.h>
 #include <sys/types.h> 
 
-#include "abb_comm.h"
-#include "matVec.h"
+#include "open_abb_driver/abb_comm.h"
+#include "open_abb_driver/matvec/matVec.h"
 
 //ROS specific
 #include <ros/ros.h>
 
-#include <abb_node/robot_Ping.h>
-#include <abb_node/robot_SetCartesian.h>
-#include <abb_node/robot_GetCartesian.h>
-#include <abb_node/robot_SetWorkObject.h>
-#include <abb_node/robot_SetZone.h>
-#include <abb_node/robot_SetTool.h>
-#include <abb_node/robot_SetComm.h>
-#include <abb_node/robot_SetJoints.h>
-#include <abb_node/robot_GetJoints.h>
-#include <abb_node/robot_SetSpeed.h>
-#include <abb_node/robot_SetVacuum.h>
-#include <abb_node/robot_SetDIO.h>
-#include <abb_node/robot_SpecialCommand.h>
-#include <abb_node/robot_Stop.h>
-#include <abb_node/robot_SetTrackDist.h>
-#include <abb_node/robot_IsMoving.h>
+#include <open_abb_driver/robot_Ping.h>
+#include <open_abb_driver/robot_SetCartesian.h>
+#include <open_abb_driver/robot_GetCartesian.h>
+#include <open_abb_driver/robot_SetWorkObject.h>
+#include <open_abb_driver/robot_SetZone.h>
+#include <open_abb_driver/robot_SetTool.h>
+#include <open_abb_driver/robot_SetComm.h>
+#include <open_abb_driver/robot_SetJoints.h>
+#include <open_abb_driver/robot_GetJoints.h>
+#include <open_abb_driver/robot_SetSpeed.h>
+#include <open_abb_driver/robot_SetVacuum.h>
+#include <open_abb_driver/robot_SetDIO.h>
+#include <open_abb_driver/robot_SpecialCommand.h>
+#include <open_abb_driver/robot_Stop.h>
+#include <open_abb_driver/robot_SetTrackDist.h>
+#include <open_abb_driver/robot_IsMoving.h>
 
 //ROS specific, these are redundant with abb_node
 //standard libary messages instead of custom messages
@@ -76,6 +76,9 @@
 #define VACUUM_OPEN 0
 #define VACUUM_CLOSE 1
 
+namespace open_abb_driver
+{
+	
 typedef enum
 {
   ZONE_FINE = 0,
@@ -124,53 +127,53 @@ class RobotController
 
   // Service Callbacks
   bool robot_Ping(
-      abb_node::robot_Ping::Request& req, 
-      abb_node::robot_Ping::Response& res);
+      open_abb_driver::robot_Ping::Request& req, 
+      open_abb_driver::robot_Ping::Response& res);
   bool robot_SetCartesian(
-      abb_node::robot_SetCartesian::Request& req, 
-      abb_node::robot_SetCartesian::Response& res);
+      open_abb_driver::robot_SetCartesian::Request& req, 
+      open_abb_driver::robot_SetCartesian::Response& res);
   bool robot_GetCartesian(
-      abb_node::robot_GetCartesian::Request& req, 
-      abb_node::robot_GetCartesian::Response& res);
+      open_abb_driver::robot_GetCartesian::Request& req, 
+      open_abb_driver::robot_GetCartesian::Response& res);
   bool robot_SetJoints(
-      abb_node::robot_SetJoints::Request& req, 
-      abb_node::robot_SetJoints::Response& res);
+      open_abb_driver::robot_SetJoints::Request& req, 
+      open_abb_driver::robot_SetJoints::Response& res);
   bool robot_GetJoints(
-      abb_node::robot_GetJoints::Request& req, 
-      abb_node::robot_GetJoints::Response& res);
+      open_abb_driver::robot_GetJoints::Request& req, 
+      open_abb_driver::robot_GetJoints::Response& res);
   bool robot_Stop(
-      abb_node::robot_Stop::Request& req, 
-      abb_node::robot_Stop::Response& res);
+      open_abb_driver::robot_Stop::Request& req, 
+      open_abb_driver::robot_Stop::Response& res);
   bool robot_SetTool(
-      abb_node::robot_SetTool::Request& req, 
-      abb_node::robot_SetTool::Response& res);
+      open_abb_driver::robot_SetTool::Request& req, 
+      open_abb_driver::robot_SetTool::Response& res);
   bool robot_SetWorkObject(
-      abb_node::robot_SetWorkObject::Request& req, 
-      abb_node::robot_SetWorkObject::Response& res);
+      open_abb_driver::robot_SetWorkObject::Request& req, 
+      open_abb_driver::robot_SetWorkObject::Response& res);
   bool robot_SetComm(
-      abb_node::robot_SetComm::Request& req, 
-      abb_node::robot_SetComm::Response& res);
+      open_abb_driver::robot_SetComm::Request& req, 
+      open_abb_driver::robot_SetComm::Response& res);
   bool robot_SpecialCommand(
-      abb_node::robot_SpecialCommand::Request& req,
-      abb_node::robot_SpecialCommand::Response& res);
+      open_abb_driver::robot_SpecialCommand::Request& req,
+      open_abb_driver::robot_SpecialCommand::Response& res);
   bool robot_SetVacuum(
-      abb_node::robot_SetVacuum::Request& req, 
-      abb_node::robot_SetVacuum::Response& res);
+      open_abb_driver::robot_SetVacuum::Request& req, 
+      open_abb_driver::robot_SetVacuum::Response& res);
   bool robot_SetDIO(
-      abb_node::robot_SetDIO::Request& req, 
-      abb_node::robot_SetDIO::Response& res);
+      open_abb_driver::robot_SetDIO::Request& req, 
+      open_abb_driver::robot_SetDIO::Response& res);
   bool robot_SetSpeed(
-      abb_node::robot_SetSpeed::Request& req, 
-      abb_node::robot_SetSpeed::Response& res);
+      open_abb_driver::robot_SetSpeed::Request& req, 
+      open_abb_driver::robot_SetSpeed::Response& res);
   bool robot_SetZone(
-      abb_node::robot_SetZone::Request& req, 
-      abb_node::robot_SetZone::Response& res);
+      open_abb_driver::robot_SetZone::Request& req, 
+      open_abb_driver::robot_SetZone::Response& res);
   bool robot_SetTrackDist(
-      abb_node::robot_SetTrackDist::Request& req, 
-      abb_node::robot_SetTrackDist::Response& res);
+      open_abb_driver::robot_SetTrackDist::Request& req, 
+      open_abb_driver::robot_SetTrackDist::Response& res);
   bool robot_IsMoving(
-      abb_node::robot_IsMoving::Request& req, 
-      abb_node::robot_IsMoving::Response& res);
+      open_abb_driver::robot_IsMoving::Request& req, 
+      open_abb_driver::robot_IsMoving::Response& res);
 
 
   // Advertise Services and Topics
@@ -199,10 +202,10 @@ class RobotController
   double curDist[3];      // Max allowable tracking error (pos, ang, joint)
 
   // Most recent goal position, and the final target position
-  Vec curGoalP;
-  Quaternion curGoalQ;
-  Vec curTargP;
-  Quaternion curTargQ;
+  matvec::Vec curGoalP;
+  matvec::Quaternion curGoalQ;
+  matvec::Vec curTargP;
+  matvec::Quaternion curTargQ;
   double curGoalJ[NUM_JOINTS];
   double curTargJ[NUM_JOINTS];
 
@@ -286,16 +289,18 @@ class RobotController
   double curSpd[2];
   int curVacuum;
   int curZone;
-  Vec curToolP;
-  Quaternion curToolQ;
-  Vec curWorkP;
-  Quaternion curWorkQ;
+  matvec::Vec curToolP;
+  matvec::Quaternion curToolQ;
+  matvec::Vec curWorkP;
+  matvec::Quaternion curWorkQ;
   tf::Transform curWobjTransform;
 
 
   // Robot Position and Force Information
-  Vec curP;
-  Quaternion curQ;
+  matvec::Vec curP;
+  matvec::Quaternion curQ;
   double curJ[NUM_JOINTS];
   double curForce[NUM_FORCES];
 };
+
+}

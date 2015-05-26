@@ -1,11 +1,16 @@
-#include "abb_comm.h"
+#include "open_abb_driver/abb_comm.h"
+
+using namespace std;
+
+namespace open_abb_driver
+{
 
 /**
   * Formats message to ping the ABB robot.
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::pingRobot(int idCode)
+string ABBComm::pingRobot(int idCode)
 {
   char buff[10];
   string msg("00 ");//instruction code;
@@ -30,7 +35,7 @@ string abb_comm::pingRobot(int idCode)
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::setCartesian(double x, double y, double z, double q0, double qx, double qy, double qz, int idCode)
+string ABBComm::setCartesian(double x, double y, double z, double q0, double qx, double qy, double qz, int idCode)
 {
   char buff[10];
   string msg("01 ");//instruction code;
@@ -67,7 +72,7 @@ string abb_comm::setCartesian(double x, double y, double z, double q0, double qx
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::setJoints(double joint1, double joint2, double joint3, double joint4, double joint5, double joint6, int idCode)
+string ABBComm::setJoints(double joint1, double joint2, double joint3, double joint4, double joint5, double joint6, int idCode)
 {
   char buff[10];
   string msg("02 ");//instruction code;
@@ -96,7 +101,7 @@ string abb_comm::setJoints(double joint1, double joint2, double joint3, double j
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::getCartesian(int idCode)
+string ABBComm::getCartesian(int idCode)
 {
   char buff[10];
   string msg("03 ");//instruction code;
@@ -112,7 +117,7 @@ string abb_comm::getCartesian(int idCode)
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::getJoints(int idCode)
+string ABBComm::getJoints(int idCode)
 {
   char buff[10];
   string msg("04 ");//instruction code;
@@ -135,7 +140,7 @@ string abb_comm::getJoints(int idCode)
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::setTool(double x, double y, double z, double q0, double qx, double qy, double qz, int idCode)
+string ABBComm::setTool(double x, double y, double z, double q0, double qx, double qy, double qz, int idCode)
 {
   char buff[10];
   string msg("06 ");//instruction code;
@@ -173,7 +178,7 @@ string abb_comm::setTool(double x, double y, double z, double q0, double qx, dou
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::setWorkObject(double x, double y, double z, double q0, double qx, double qy, double qz, int idCode)
+string ABBComm::setWorkObject(double x, double y, double z, double q0, double qx, double qy, double qz, int idCode)
 {
   char buff[10];
   string msg("07 ");//instruction code;
@@ -207,7 +212,7 @@ string abb_comm::setWorkObject(double x, double y, double z, double q0, double q
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::setSpeed(double tcp, double ori, int idCode)
+string ABBComm::setSpeed(double tcp, double ori, int idCode)
 {
   char buff[10];
   string msg("08 ");//instruction code;
@@ -224,7 +229,7 @@ string abb_comm::setSpeed(double tcp, double ori, int idCode)
 }
 
 
-string abb_comm::setZone(bool fine, double tcp_mm, double ori_mm, double ori_deg, int idCode)
+string ABBComm::setZone(bool fine, double tcp_mm, double ori_mm, double ori_deg, int idCode)
 {
  char buff[10];
   string msg("09 ");//instruction code;
@@ -255,7 +260,7 @@ string abb_comm::setZone(bool fine, double tcp_mm, double ori_mm, double ori_deg
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::specialCommand(int command, double param1, double param2, double param3, double param4, double param5, int idCode)
+string ABBComm::specialCommand(int command, double param1, double param2, double param3, double param4, double param5, int idCode)
 {
   char buff[12];
   string msg("10 ");//instruction code;
@@ -285,7 +290,7 @@ string abb_comm::specialCommand(int command, double param1, double param2, doubl
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::setVacuum(int vacuum, int idCode)
+string ABBComm::setVacuum(int vacuum, int idCode)
 {
   char buff[10];
   string msg("11 ");//instruction code;
@@ -301,7 +306,7 @@ string abb_comm::setVacuum(int vacuum, int idCode)
 
 
 
-string abb_comm::setDIO(int dio_number, int dio_state, int idCode)
+string ABBComm::setDIO(int dio_number, int dio_state, int idCode)
 {
   char buff[10];
   string msg("26 ");//instruction code;
@@ -322,7 +327,7 @@ string abb_comm::setDIO(int dio_number, int dio_state, int idCode)
   * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
   * @return String to be sent to ABB server.
   */
-string abb_comm::closeConnection(int idCode)
+string ABBComm::closeConnection(int idCode)
 {
   char buff[10];
   string msg("99 ");//instruction code;
@@ -346,7 +351,7 @@ string abb_comm::closeConnection(int idCode)
   * @param qz Placer for the fourth component of the orientation quaternion of the ABB robot.
   * @return Whether the message was received correctly or not by the ABB robot.
   */
-int abb_comm::parseCartesian(std::string msg, double *x, double *y, 
+int ABBComm::parseCartesian(std::string msg, double *x, double *y, 
     double *z,double *q0, double *qx, double *qy, double*qz)
 {
   int ok, idCode;
@@ -368,7 +373,7 @@ int abb_comm::parseCartesian(std::string msg, double *x, double *y,
   * @param joint6 Placer for the joint 6 of the ABB robot.
   * @return Whether the message was received correctly or not by the ABB robot.
   */
-int abb_comm::parseJoints(std::string msg,  double *joint1, 
+int ABBComm::parseJoints(std::string msg,  double *joint1, 
     double *joint2, double *joint3, double *joint4, 
     double *joint5, double *joint6)
 {
@@ -378,4 +383,6 @@ int abb_comm::parseJoints(std::string msg,  double *joint1,
     return idCode;
   else
     return -1;
+}
+
 }

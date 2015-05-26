@@ -56,7 +56,7 @@ class Robot:
         try:
             while True:
                 data = map(float, s.recv(4096).split())
-                result = 
+                #result = 
                 if   int(data[1]) == 0: 
                     self.pose.append([data[2:5], data[5:]])
                 #elif int(data[1]) == 1: self.joints.append([a[2:5], a[5:]])
