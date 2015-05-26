@@ -42,15 +42,17 @@ catkin_package(
 
 include_directories( include
 					 ${catkin_INCLUDE_DIRS} )
-	
-add_library( matvec src/matvec/HomogTransf.cpp
-					src/matvec/Mat.cpp
-					src/matvec/Polynom.cpp
-					src/matvec/Quaternion.cpp
-					src/matvec/RotMat.cpp
-					src/matvec/Vec.cpp )
-                            
-add_library( abb_comm src/abb_comm.cpp )
+
+add_library( matvec 
+	src/matvec/HomogTransf.cpp
+	src/matvec/Mat.cpp
+	src/matvec/Polynom.cpp
+	src/matvec/Quaternion.cpp
+	src/matvec/RotMat.cpp
+	src/matvec/Vec.cpp )
+
+add_library( abb_comm 
+	src/abb_comm.cpp )
 add_dependencies( abb_comm ${open_abb_driver_EXPORTED_TARGETS} )
 target_link_libraries( abb_comm
 	${catkin_LIBRARIES} )
@@ -64,12 +66,8 @@ install( TARGETS abb_comm matvec abb_node
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 	)
-	
-file( GLOB open_abb_driver_HEADERS
-	"include/*.h" )
 
-message( STATUS "Include destination: ${CATKIN_PACKAGE_INCLUDE_DESTINATION}" )
-
-install( FILES ${open_abb_driver_HEADERS}
+install( DIRECTORY include/${PROJECT_NAME}/
 	DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+	FILES_MATCHING PATTERN "*.h"
 )
