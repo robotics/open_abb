@@ -1,6 +1,0 @@
-#Service to set vacuum on/off
-
-int64 vacuum  #1-on; 0-off
----
-int64 ret
-string msg

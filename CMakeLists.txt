@@ -21,7 +21,6 @@ add_service_files(
 					robot_SetSpeed.srv
 					robot_SetTool.srv
 					robot_SetTrackDist.srv
-					robot_SetVacuum.srv
 					robot_SetWorkObject.srv
 					robot_SetZone.srv
 					robot_SpecialCommand.srv

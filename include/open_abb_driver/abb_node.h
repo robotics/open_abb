@@ -25,7 +25,6 @@
 #include <open_abb_driver/robot_SetJoints.h>
 #include <open_abb_driver/robot_GetJoints.h>
 #include <open_abb_driver/robot_SetSpeed.h>
-#include <open_abb_driver/robot_SetVacuum.h>
 #include <open_abb_driver/robot_SetDIO.h>
 #include <open_abb_driver/robot_SpecialCommand.h>
 #include <open_abb_driver/robot_Stop.h>
@@ -72,9 +71,6 @@
 
 #define BLOCKING 1
 #define NON_BLOCKING 0
-
-#define VACUUM_OPEN 0
-#define VACUUM_CLOSE 1
 
 namespace open_abb_driver
 {
@@ -156,9 +152,6 @@ class RobotController
   bool robot_SpecialCommand(
       open_abb_driver::robot_SpecialCommand::Request& req,
       open_abb_driver::robot_SpecialCommand::Response& res);
-  bool robot_SetVacuum(
-      open_abb_driver::robot_SetVacuum::Request& req, 
-      open_abb_driver::robot_SetVacuum::Response& res);
   bool robot_SetDIO(
       open_abb_driver::robot_SetDIO::Request& req, 
       open_abb_driver::robot_SetDIO::Response& res);
@@ -253,7 +246,6 @@ class RobotController
   ros::ServiceServer handle_SetTrackDist;
   ros::ServiceServer handle_SpecialCommand;
   ros::ServiceServer handle_SetComm;
-  ros::ServiceServer handle_SetVacuum;
   ros::ServiceServer handle_SetDIO;
   ros::ServiceServer handle_IsMoving;
  
@@ -272,7 +264,6 @@ class RobotController
   bool setWorkObject(double x, double y, double z, 
     double q0, double qx, double qy, double qz);
   bool specialCommand(int command, double param1=0, double param2=0, double param3=0, double param4=0, double param5=0);
-  bool setVacuum(int v);
   bool setDIO(int dio_num, int dio_state);
   bool setSpeed(double tcp, double ori);
   bool setZone(int z);
@@ -287,7 +278,6 @@ class RobotController
 
   // Robot State
   double curSpd[2];
-  int curVacuum;
   int curZone;
   matvec::Vec curToolP;
   matvec::Quaternion curToolQ;
@@ -301,6 +291,8 @@ class RobotController
   matvec::Quaternion curQ;
   double curJ[NUM_JOINTS];
   double curForce[NUM_FORCES];
+  
+  double normalizeQuaternion( double& q0, double& qx, double& qy, double& qz );
 };
 
 }

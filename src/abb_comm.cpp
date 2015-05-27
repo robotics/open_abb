@@ -15,8 +15,8 @@ string ABBComm::pingRobot(int idCode)
   char buff[10];
   string msg("00 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   msg += "#";
 
   return (msg);
@@ -40,8 +40,8 @@ string ABBComm::setCartesian(double x, double y, double z, double q0, double qx,
   char buff[10];
   string msg("01 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%+08.1lf ",x);
   msg += buff ;
   sprintf(buff,"%+08.1lf ",y);
@@ -77,8 +77,8 @@ string ABBComm::setJoints(double joint1, double joint2, double joint3, double jo
   char buff[10];
   string msg("02 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%+08.2lf ",joint1);
   msg += buff ;
   sprintf(buff,"%+08.2lf ",joint2);
@@ -106,8 +106,8 @@ string ABBComm::getCartesian(int idCode)
   char buff[10];
   string msg("03 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   msg += "#";
   return (msg);
 }
@@ -122,8 +122,8 @@ string ABBComm::getJoints(int idCode)
   char buff[10];
   string msg("04 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   msg += "#";
   return (msg);
 }
@@ -145,8 +145,8 @@ string ABBComm::setTool(double x, double y, double z, double q0, double qx, doub
   char buff[10];
   string msg("06 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%+08.1lf ",x);
   msg += buff ;
   sprintf(buff,"%+08.1lf ",y);
@@ -183,8 +183,8 @@ string ABBComm::setWorkObject(double x, double y, double z, double q0, double qx
   char buff[10];
   string msg("07 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%+08.1lf ",x);
   msg += buff ;
   sprintf(buff,"%+08.1lf ",y);
@@ -217,8 +217,8 @@ string ABBComm::setSpeed(double tcp, double ori, int idCode)
   char buff[10];
   string msg("08 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%08.1lf ",tcp);
   msg += buff ;
   sprintf(buff,"%08.2lf ",ori);
@@ -234,8 +234,8 @@ string ABBComm::setZone(bool fine, double tcp_mm, double ori_mm, double ori_deg,
  char buff[10];
   string msg("09 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%.1d ",fine);
   msg += buff ;
   sprintf(buff,"%.2lf ", tcp_mm);
@@ -265,8 +265,8 @@ string ABBComm::specialCommand(int command, double param1, double param2, double
   char buff[12];
   string msg("10 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%.1d ",command);
   msg += buff ;
   sprintf(buff,"%+09.2lf ", param1);
@@ -284,35 +284,13 @@ string ABBComm::specialCommand(int command, double param1, double param2, double
   return (msg);
 }
 
-/**
-  * Formats message to set the vacuum on/off.
-  * @param vacuum 1-on 0-off.
-  * @param idCode User code identifying the message. Will be sent back with the acknowledgement.
-  * @return String to be sent to ABB server.
-  */
-string ABBComm::setVacuum(int vacuum, int idCode)
-{
-  char buff[10];
-  string msg("11 ");//instruction code;
-  
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
-  sprintf(buff,"%.2d ",vacuum);
-  msg += buff ;
-  msg += "#";
-
-  return (msg);
-}
-
-
-
 string ABBComm::setDIO(int dio_number, int dio_state, int idCode)
 {
   char buff[10];
   string msg("26 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   sprintf(buff,"%.2d ", dio_number);
   msg += buff ;
   sprintf(buff,"%.2d ", dio_state);
@@ -332,8 +310,8 @@ string ABBComm::closeConnection(int idCode)
   char buff[10];
   string msg("99 ");//instruction code;
   
-  sprintf(buff,"%.3d ",idCode); //identification code
-  msg += buff;
+//   sprintf(buff,"%.3d ",idCode); //identification code
+//   msg += buff;
   msg += "#";
 
   return (msg);
@@ -355,7 +333,7 @@ int ABBComm::parseCartesian(std::string msg, double *x, double *y,
     double *z,double *q0, double *qx, double *qy, double*qz)
 {
   int ok, idCode;
-  sscanf(msg.c_str(),"%*d %d %d %*f %lf %lf %lf %lf %lf %lf %lf",&idCode,&ok,x,y,z,q0,qx,qy,qz);
+  sscanf(msg.c_str(),"%d %d %lf %lf %lf %lf %lf %lf %lf",&idCode,&ok,x,y,z,q0,qx,qy,qz);
   if (ok)
     return idCode;
   else
@@ -378,7 +356,8 @@ int ABBComm::parseJoints(std::string msg,  double *joint1,
     double *joint5, double *joint6)
 {
   int ok, idCode;
-  sscanf(msg.c_str(),"%*d %d %d %*f %lf %lf %lf %lf %lf %lf",&idCode,&ok,joint1,joint2,joint3,joint4,joint5,joint6);
+  idCode = 1;
+  sscanf(msg.c_str(),"%d %d %lf %lf %lf %lf %lf %lf",&idCode,&ok,joint1,joint2,joint3,joint4,joint5,joint6);
   if (ok)
     return idCode;
   else

@@ -29,8 +29,8 @@ class Robot:
         self.delay   = .08
 
         self.connect_motion((ip, port_motion))
-        #log_thread = Thread(target = self.get_net, 
-        #                    args   = ((ip, port_logger))).start()
+        #log_thread = Thread( target = self.connect_logger, 
+                             #args   = ((ip, port_logger),None) ).start()
         
         self.set_units('millimeters', 'degrees')
         self.set_tool()
@@ -50,16 +50,23 @@ class Robot:
         self.pose   = deque(maxlen=maxlen)
         self.joints = deque(maxlen=maxlen)
         
+        print maxlen
+        
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect(remote)
         s.setblocking(1)
         try:
             while True:
-                data = map(float, s.recv(4096).split())
-                #result = 
+                data = s.recv(4096).split()
+                #print data
                 if   int(data[1]) == 0: 
-                    self.pose.append([data[2:5], data[5:]])
-                #elif int(data[1]) == 1: self.joints.append([a[2:5], a[5:]])
+                    payload = map(float, data[4:])
+                    #print payload
+                    self.pose.append(payload)
+                elif int(data[1]) == 1:
+                    payload = map(float, data[4:])
+                    #print payload
+                    self.joints.append(payload)
         finally:
             s.shutdown(socket.SHUT_RDWR)
 

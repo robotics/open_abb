@@ -36,7 +36,6 @@ RobotController::~RobotController() {
   handle_SetZone.shutdown();
   handle_SetTrackDist.shutdown();
   handle_SetComm.shutdown();
-  handle_SetVacuum.shutdown();
   handle_SetDIO.shutdown();
   handle_SpecialCommand.shutdown();
 
@@ -68,8 +67,8 @@ bool RobotController::init()
 
   //Connection to Robot Motion server
   ROS_INFO("ROBOT_CONTROLLER: Connecting to the ABB motion server...");
-  node->getParam("robot/robotIp",robotIp);
-  node->getParam("robot/robotMotionPort",robotMotionPort);
+  node->param<std::string>("robot/robotIp",robotIp,"192.168.125.1");
+  node->param("robot/robotMotionPort",robotMotionPort,5000);
   connectMotionServer(robotIp.c_str(), robotMotionPort);
   if(!motionConnected)
   {
@@ -78,7 +77,7 @@ bool RobotController::init()
 
   //Connect to Robot Logger server
   ROS_INFO("ROBOT_CONTROLLER: Connecting to the ABB logger server...");
-  node->getParam("robot/robotLoggerPort",robotLoggerPort);
+  node->param("robot/robotLoggerPort",robotLoggerPort,5001);
   connectLoggerServer(robotIp.c_str(), robotLoggerPort);
   if(!loggerConnected)
   {
@@ -114,7 +113,7 @@ bool RobotController::init()
 }
 
 // This function initializes the default configuration of the robot.
-// It sets the work object, tool, zone, speed, and vacuum based on
+// It sets the work object, tool, zone, and speed based on
 // default parameters from the ROS parameter file
 bool RobotController::defaultRobotConfiguration()
 {
@@ -122,44 +121,42 @@ bool RobotController::defaultRobotConfiguration()
   double defTx,defTy,defTz,defTq0,defTqx,defTqy,defTqz;
   int zone;
   double speedTCP, speedORI;
-  int vacuumMode;
 
   //WorkObject
-  node->getParam("robot/workobjectX",defWOx);
-  node->getParam("robot/workobjectY",defWOy);
-  node->getParam("robot/workobjectZ",defWOz);
-  node->getParam("robot/workobjectQ0",defWOq0);
-  node->getParam("robot/workobjectQX",defWOqx);
-  node->getParam("robot/workobjectQY",defWOqy);
-  node->getParam("robot/workobjectQZ",defWOqz);
+  node->param("robot/workobjectX",defWOx,0.0);
+  node->param("robot/workobjectY",defWOy,0.0);
+  node->param("robot/workobjectZ",defWOz,0.0);
+  node->param("robot/workobjectQ0",defWOq0,1.0);
+  node->param("robot/workobjectQX",defWOqx,0.0);
+  node->param("robot/workobjectQY",defWOqy,0.0);
+  node->param("robot/workobjectQZ",defWOqz,0.0);
+  
+  ROS_INFO( "Setting default work object..." );
   if (!setWorkObject(defWOx,defWOy,defWOz,defWOq0,defWOqx,defWOqy,defWOqz))
     return false;
 
   //Tool
-  node->getParam("robot/toolX",defTx);
-  node->getParam("robot/toolY",defTy);
-  node->getParam("robot/toolZ",defTz);
-  node->getParam("robot/toolQ0",defTq0);
-  node->getParam("robot/toolQX",defTqx);
-  node->getParam("robot/toolQY",defTqy);
-  node->getParam("robot/toolQZ",defTqz);
+  node->param("robot/toolX",defTx,0.0);
+  node->param("robot/toolY",defTy,0.0);
+  node->param("robot/toolZ",defTz,0.0);
+  node->param("robot/toolQ0",defTq0,1.0);
+  node->param("robot/toolQX",defTqx,0.0);
+  node->param("robot/toolQY",defTqy,0.0);
+  node->param("robot/toolQZ",defTqz,0.0);
+  
+  ROS_INFO( "Setting default tool..." );
   if (!setTool(defTx,defTy,defTz,defTq0,defTqx,defTqy,defTqz))
     return false;
 
   //Zone
-  node->getParam("robot/zone",zone);
+  node->param("robot/zone",zone,1);
   if (!setZone(zone))
     return false;
 
   //Speed
-  node->getParam("robot/speedTCP",speedTCP);
-  node->getParam("robot/speedORI",speedORI);
+  node->param("robot/speedTCP",speedTCP,250.0);
+  node->param("robot/speedORI",speedORI,250.0);
   if (!setSpeed(speedTCP, speedORI))
-    return false;
-
-  //Vacuum
-  node->getParam("robot/vacuum",vacuumMode);
-  if (!setVacuum(vacuumMode))
     return false;
 
   // If everything is set, our default configuration has been set up correctly
@@ -211,8 +208,6 @@ void RobotController::advertiseServices()
       &RobotController::robot_SetComm, this);
   handle_SpecialCommand = node->advertiseService("SpecialCommand",
       &RobotController::robot_SpecialCommand, this);
-  handle_SetVacuum = node->advertiseService("SetVacuum", 
-      &RobotController::robot_SetVacuum, this);
   handle_SetDIO = node->advertiseService("SetDIO", 
       &RobotController::robot_SetDIO, this);
   handle_IsMoving = node->advertiseService("IsMoving", 
@@ -255,6 +250,10 @@ bool RobotController::robot_SetCartesian(
       req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz, 
       sqrt(req.q0*req.q0 + req.qx*req.qx + req.qy*req.qy + req.qz*req.qz));
       */
+  
+  // Error checking
+  normalizeQuaternion( req.quaternion[0], req.quaternion[1], req.quaternion[2], req.quaternion[3] );
+  
   // If we are in non-blocking mode
   if (non_blocking)
   {
@@ -482,6 +481,9 @@ bool RobotController::robot_SetTool(
     open_abb_driver::robot_SetTool::Request& req, 
     open_abb_driver::robot_SetTool::Response& res)
 {
+	// Error checking
+	normalizeQuaternion( req.q0, req.qx, req.qy, req.qz );
+	
   // Simply call our internal method to set the tool
   if (setTool(req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz))
   {
@@ -502,6 +504,10 @@ bool RobotController::robot_SetWorkObject(
     open_abb_driver::robot_SetWorkObject::Request& req, 
     open_abb_driver::robot_SetWorkObject::Response& res)
 {
+
+	// Error checking
+	normalizeQuaternion( req.q0, req.qx, req.qy, req.qz );
+	
   // Simply call our internal method to set the work object
   if(setWorkObject(req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz))
   {
@@ -660,27 +666,6 @@ bool RobotController::robot_SpecialCommand(
   }
 }
 
-// Turn the Vacuum on or off on the robot
-bool RobotController::robot_SetVacuum(
-    open_abb_driver::robot_SetVacuum::Request& req, 
-    open_abb_driver::robot_SetVacuum::Response& res)
-{
-  // Simply call our internal method
-  if (setVacuum(req.vacuum))
-  {
-    res.ret = 1;
-    res.msg = "ROBOT_CONTROLLER: OK.";
-    return true;
-  }
-  else
-  {
-    res.ret = 0;
-    res.msg = "ROBOT_CONTROLLER: Not able to toggle the vacuum state.";
-    return false;
-  }
-}
-
-
 // Lock/Unlock tool changer
 bool RobotController::robot_SetDIO(
 				   open_abb_driver::robot_SetDIO::Request& req, 
@@ -696,7 +681,7 @@ bool RobotController::robot_SetDIO(
   else
   {
     res.ret = 0;
-    res.msg = "ROBOT_CONTROLLER: Not able to toggle the vacuum state.";
+    res.msg = "ROBOT_CONTROLLER: Not able to toggle the DIO state.";
     return false;
   }
 }
@@ -823,6 +808,7 @@ bool RobotController::setCartesian(double x, double y, double z,
   // We will do some collision checking and sanity checking here
   // some time in the future
   
+	
   /*
   // For debugging purposes
   ROS_INFO("ACTION: %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, %1.2f, mag = %f", 
@@ -956,6 +942,10 @@ bool RobotController::stop_nb()
 bool RobotController::setTool(double x, double y, double z, 
     double q0, double qx, double qy, double qz)
 {
+	
+	// Error checking
+	normalizeQuaternion( q0, qx, qy, qz );
+	
   // Only take action if the required values are different than the actual ones
   if(x!=curToolP[0] || y!=curToolP[1] || y!=curToolP[2] || 
      q0!=curToolQ[0] || qx!=curToolQ[1] || qy!=curToolQ[2] || qz!=curToolQ[3])
@@ -1000,6 +990,9 @@ bool RobotController::setTool(double x, double y, double z,
 bool RobotController::setWorkObject(double x, double y, double z, 
     double q0, double qx, double qy, double qz)
 {
+	// Error checking
+	normalizeQuaternion( q0, qx, qy, qz );
+	
   // Only take action if the required values are different than the actual ones
   if(x!=curWorkP[0] || y!=curWorkP[1] || y!=curWorkP[2] || 
      q0!=curWorkQ[0] || qx!=curWorkQ[1] || qy!=curWorkQ[2] || qz!=curWorkQ[3])
@@ -1031,7 +1024,6 @@ bool RobotController::setWorkObject(double x, double y, double z,
 	  curWobjTransform.setOrigin(tf::Vector3(x*.001, y*.001, z*.001));
 	  curWobjTransform.setRotation(tf::Quaternion(qx, qy, qz, q0));
 	  pthread_mutex_unlock(&wobjUpdateMutex);
-
 
 	  // We also save it to the parameter server
 	  node->setParam("robot/workobjectX",x);
@@ -1098,7 +1090,7 @@ bool RobotController::setZone(int z)
       // Make sure the specified zone number exists
       if (z < 0 || z > NUM_ZONES)
 	{
-	  ROS_INFO("ROBOT_CONTROLLER: SetZone command not sent. Invalide zone mode.");
+	  ROS_INFO("ROBOT_CONTROLLER: SetZone command not sent. Invalid zone mode.");
 	  return false;
 	}
       
@@ -1133,41 +1125,6 @@ bool RobotController::specialCommand(int command, double param1, double param2, 
   else
     return false;
 }
-
-// Open or close the vacuum 0 is open, 1 is closed
-bool RobotController::setVacuum(int v)
-{
-  // Only take action if the required values are different than the actual ones
-  if(v!=curVacuum)
-    {
-      char message[MAX_BUFFER];
-      char reply[MAX_BUFFER];
-      int randNumber = (int)(ID_CODE_MAX*(double)rand()/(double)(RAND_MAX));
-      
-      // Make sure we are either opening or closing the vacuum
-      if((v != VACUUM_OPEN) && (v != VACUUM_CLOSE))
-	{
-	  ROS_INFO("ROBOT_CONTROLLER: SetVacuum command not sent. "
-		   "Invalid communication mode.");
-	  return false;
-	}
-      
-      strcpy(message, ABBComm::setVacuum(v, randNumber).c_str());
-      
-      if(sendAndReceive(message, strlen(message), reply, randNumber))
-	{
-	  // Remember the current state of the vacuum if the command sent
-	  curVacuum = v;
-	  // We also save it to the parameter server
-	  node->setParam("robot/vacuum",v);
-	  return true;
-	}
-      else
-	return false;
-    }
-  return true;
-}
-
 
 bool RobotController::setDIO(int dio_num, int dio_state)
 {
@@ -1293,6 +1250,7 @@ bool RobotController::connectMotionServer(const char* ip, int port)
 
 // Helper function to send a command to the robot, 
 // wait for an answer and check for correctness.
+// NOTE idCode sending is broken, don't use
 bool RobotController::sendAndReceive(char *message, int messageLength, 
     char* reply, int idCode)
 {
@@ -1311,15 +1269,15 @@ bool RobotController::sendAndReceive(char *message, int messageLength,
     {
       reply[t] = '\0';
       int ok, rcvIdCode;
-      sscanf(reply,"%*d %d %d", &rcvIdCode, &ok);
+      sscanf(reply,"%d %d", &rcvIdCode, &ok);
       if(idCode!=-1)
       {  
-        if ((ok == SERVER_OK) && (rcvIdCode == idCode))
+        if (ok == SERVER_OK) //&& (rcvIdCode == idCode))
         {
           pthread_mutex_unlock(&sendRecvMutex);
           return true;
         }
-        else if ((ok == SERVER_COLLISION) && (rcvIdCode == idCode))
+        else if (ok == SERVER_COLLISION) //&& (rcvIdCode == idCode))
         {
           ROS_WARN("ROBOT_CONTROLLER: Collision Detected.");
         }
@@ -1903,6 +1861,7 @@ int main(int argc, char** argv)
   // Initialize the Robot Node
   if (!ABBrobot.init())
     exit(-1);
+  ROS_INFO( "Robot initialized." );
  
   // Initialize the mutex's we will be using in our threads
   pthread_mutex_init(&nonBlockMutex, NULL);
@@ -1967,4 +1926,15 @@ int main(int argc, char** argv)
 
   ROS_INFO("ROBOT_CONTROLLER: Done.");
   return 0;
+}
+
+double RobotController::normalizeQuaternion( double& q0, double& qx, double& qy, double& qz )
+{
+	double norm = std::sqrt( q0*q0 + qx*qx + qy*qy + qz*qz );
+	q0 = q0/norm;
+	qx = qx/norm;
+	qy = qy/norm;
+	qz = qz/norm;
+	return norm;
+	
 }
