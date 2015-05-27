@@ -1,5 +1,4 @@
 # Service to get the cartesian position of the robot
-
 ---
 float64 x
 float64 y
@@ -8,5 +7,3 @@ float64 q0
 float64 qx
 float64 qy
 float64 qz
-int64 ret
-string msg

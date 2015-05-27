@@ -12,19 +12,15 @@ find_package( catkin 	REQUIRED
 add_service_files(
 	FILES 			robot_GetCartesian.srv
 					robot_GetJoints.srv
-					robot_IsMoving.srv
 					robot_Ping.srv
 					robot_SetCartesian.srv
-					robot_SetComm.srv
 					robot_SetDIO.srv
 					robot_SetJoints.srv
 					robot_SetSpeed.srv
 					robot_SetTool.srv
-					robot_SetTrackDist.srv
 					robot_SetWorkObject.srv
 					robot_SetZone.srv
 					robot_SpecialCommand.srv
-					robot_Stop.srv
 )
 
 generate_messages()
@@ -51,12 +47,14 @@ add_library( matvec
 	src/matvec/Vec.cpp )
 
 add_library( abb_comm 
-	src/abb_comm.cpp )
+			 src/ABBProtocol.cpp
+			 src/ABBControlInterface.cpp
+			 src/ABBFeedbackInterface.cpp)
 add_dependencies( abb_comm ${open_abb_driver_EXPORTED_TARGETS} )
 target_link_libraries( abb_comm
 	${catkin_LIBRARIES} )
 
-add_executable( abb_node nodes/abb_node.cpp )
+add_executable( abb_node nodes/ABBNode.cpp )
 add_dependencies( abb_node ${PROJECT_NAME}_gencfg )
 target_link_libraries( abb_node abb_comm matvec )
 

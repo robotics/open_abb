@@ -7,5 +7,3 @@ float64 param3 #Special purpose parameter number 3
 float64 param4 #Special purpose parameter number 4
 float64 param5 #Special purpose parameter number 5
 ---
-int64 ret
-string msg
