@@ -26,7 +26,9 @@ namespace open_abb_driver
 	}
 	
 	RobotController::~RobotController() 
-	{}
+	{
+		feedbackWorker.join();
+	}
 	
 	bool RobotController::Initialize()
 	{
@@ -63,7 +65,7 @@ namespace open_abb_driver
 	void RobotController::FeedbackSpin()
 	{
 		FeedbackVisitor visitor( handle_JointsLog, handle_CartesianLog );
-		while( true )
+		while( ros::ok() )
 		{
 			feedbackInterface->Spin();
 			while( feedbackInterface->HasFeedback() )
@@ -95,14 +97,16 @@ namespace open_abb_driver
 		privHandle.param("workobject_x",defWOx,0.0);
 		privHandle.param("workobject_y",defWOy,0.0);
 		privHandle.param("workobject_z",defWOz,0.0);
-		privHandle.param("workobject_q0",defWOq0,1.0);
+		privHandle.param("workobject_qw",defWOq0,1.0);
 		privHandle.param("workobject_qx",defWOqx,0.0);
 		privHandle.param("workobject_qy",defWOqy,0.0);
 		privHandle.param("workobject_qz",defWOqz,0.0);
 		
-		ROS_INFO( "Setting default work object..." );
-		if (SetWorkObject(defWOx,defWOy,defWOz,defWOq0,defWOqx,defWOqy,defWOqz))
+		if( !SetWorkObject(defWOx,defWOy,defWOz,defWOq0,defWOqx,defWOqy,defWOqz))
+		{
+			ROS_WARN( "Unable to set the work object." );
 			return false;
+		}
 		// TODO
 
 		
@@ -110,25 +114,33 @@ namespace open_abb_driver
 		privHandle.param("tool_x",defTx,0.0);
 		privHandle.param("tool_y",defTy,0.0);
 		privHandle.param("tool_z",defTz,0.0);
-		privHandle.param("tool_q0",defTq0,1.0);
+		privHandle.param("tool_qw",defTq0,1.0);
 		privHandle.param("tool_qx",defTqx,0.0);
 		privHandle.param("tool_qy",defTqy,0.0);
 		privHandle.param("tool_qz",defTqz,0.0);
 		
-		ROS_INFO( "Setting default tool..." );
-		if (!controlInterface->SetTool(defTx,defTy,defTz,defTq0,defTqx,defTqy,defTqz))
+		if( !controlInterface->SetTool(defTx,defTy,defTz,defTq0,defTqx,defTqy,defTqz))
+		{
+			ROS_WARN( "Unable to set the tool." );
 			return false;
+		}
 		
 		//Zone
 		privHandle.param("zone",zone,1);
 		if( !controlInterface->SetZone(zone) )
+		{
+			ROS_WARN( "Unable to set the tracking zone." );
 			return false;
+		}
 		
 		//Speed
-		privHandle.param("speedTCP",speedTCP,250.0);
-		privHandle.param("speedORI",speedORI,250.0);
-		if (!controlInterface->SetSpeed(speedTCP, speedORI))
+		privHandle.param("speed_tcp",speedTCP,0.250);
+		privHandle.param("speed_ori",speedORI,0.250);
+		if( !controlInterface->SetSpeed(speedTCP, speedORI) )
+		{
+			ROS_WARN( "Unable to set the speed." );
 			return false;
+		}
 		
 		return true;
 	}

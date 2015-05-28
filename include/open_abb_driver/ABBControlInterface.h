@@ -55,18 +55,17 @@ namespace open_abb_driver
 		/*! \brief Retrieve the joint angles in radians. */
 		bool GetJoints( std::array<double,6>& position );
 		
-		/*! \brief Specify the tool coordinate frame. */
+		/*! \brief Specify the tool coordinate frame in meters. */
 		bool SetTool( double x, double y, double z, double q0, double qx, double qy, double qz );
-		/*! \brief Specify the work object coordinate frame. */
+		/*! \brief Specify the work object coordinate frame in meters. */
 		bool SetWorkObject( double x, double y, double z, double q0, double qx, double qy, double qz );
 		
-		bool SpecialCommand( int command, double param1=0, double param2=0, double param3=0, double param4=0, double param5=0 );
 		bool SetDIO( int dio_num, int dio_state );
 		
-		/*! \brief Specify the translation and orientation speeds in mm/s. */
+		/*! \brief Specify the translation and orientation speeds in m/s. */
 		bool SetSpeed( double tcp, double ori );
 		
-		/*! \brief Set the tracking precision (zone). */
+		/*! \brief Set the tracking precision (zone) index. */
 		bool SetZone( int z );
 		
 	private:

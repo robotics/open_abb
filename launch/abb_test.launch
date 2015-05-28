@@ -1,0 +1,25 @@
+<launch>
+  <node pkg="open_abb_driver" type="abb_node" name="abb_arm" output="screen">
+    <rosparam>
+      workobject_x: 0.543651
+      workobject_y: -0.681651
+      workobject_z: 0.171553
+      workobject_qw: 1.0
+      workobject_qx: 0.0
+      workobject_qy: 0.0
+      workobject_qz: 0.0
+      
+      tool_x: 0.0
+      tool_y: 0.0
+      tool_z: 0.0
+      tool_qw: 0.707
+      tool_qx: 0.0
+      tool_qy: -0.707
+      tool_qz: 0.0
+      
+      zone: 1
+      speed_tcp: 0.25
+      speed_ori: 0.25
+    </rosparam>
+  </node>
+</launch>

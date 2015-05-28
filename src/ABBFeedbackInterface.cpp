@@ -80,16 +80,17 @@ namespace open_abb_driver
 			
 			BOOST_FOREACH( const std::string& chunk, splits )
 			{
+				if( chunk.size() == 0 ) { continue; }
 				partialBuffer = chunk.c_str();
 				// The number after the start character is the type of message
-				sscanf(partialBuffer,"# %d", &code);
+				sscanf(partialBuffer,"%d", &code);
 				Feedback msg;
 				if( code == 0 )
 				{
 					CartesianFeedback cmsg;
 					char date[2000];
 					char time[2000];
-					sscanf(partialBuffer,"# %*d %s %s %*f %lf %lf %lf %lf %lf %lf %lf",
+					sscanf(partialBuffer,"%*d %s %s %*f %lf %lf %lf %lf %lf %lf %lf",
 										date,
 										time,
 										&cmsg.x, &cmsg.y, &cmsg.z,

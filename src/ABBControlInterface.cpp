@@ -139,6 +139,9 @@ namespace open_abb_driver
 	bool ABBControlInterface::SetTool( double x, double y, double z, double q0, double qx, double qy, double qz )
 	{
 		NormalizeQuaternion( q0, qx, qy, qz );
+		x *= M_2_MM;
+		y *= M_2_MM;
+		z *= M_2_MM;
 		
 		char message[max_buffer_len];
 		char reply[max_buffer_len];
@@ -147,9 +150,13 @@ namespace open_abb_driver
 		return SendAndReceive( message, reply );
 	}
 	
+	// TODO Change from m to mm
 	bool ABBControlInterface::SetWorkObject( double x, double y, double z, double q0, double qx, double qy, double qz )
 	{
 		NormalizeQuaternion( q0, qx, qy, qz );
+		x *= M_2_MM;
+		y *= M_2_MM;
+		z *= M_2_MM;
 		
 		char message[max_buffer_len];
 		char reply[max_buffer_len];
@@ -160,6 +167,9 @@ namespace open_abb_driver
 	
 	bool ABBControlInterface::SetSpeed(double tcp, double ori)
 	{
+		tcp *= M_2_MM;
+		ori *= M_2_MM;
+		
 		char message[max_buffer_len];
 		char reply[max_buffer_len];
 		strcpy(message, ABBProtocol::SetSpeed(tcp, ori).c_str());
@@ -181,14 +191,6 @@ namespace open_abb_driver
 		message = ABBProtocol::SetZone( z == ZONE_FINE, zone_values[z].p_tcp, zone_values[z].p_ori, zone_values[z].ori );
 		return SendAndReceive(message, reply);
 
-	}
-	
-	bool ABBControlInterface::SpecialCommand(int command, double param1, double param2, double param3, double param4, double param5)
-	{
-		std::string message = ABBProtocol::SpecialCommand(command, param1, param2, param3, param4, param5);
-		char reply[max_buffer_len];
-		
-		return SendAndReceive(message, reply);
 	}
 	
 	bool ABBControlInterface::SetDIO(int dio_num, int dio_state)
