@@ -61,7 +61,6 @@ namespace open_abb_driver
 		close( loggerSocket );
 	}
 	
-	// Unsynchronized since should not be called asynchronously
 	void ABBFeedbackInterface::Spin()
 	{
 		int t;
@@ -131,9 +130,25 @@ namespace open_abb_driver
 					ss << "Received invalid feedback code [" << code << "]";
 					throw std::runtime_error( ss.str() );
 				}
+				
+				boost::unique_lock<boost::mutex> lock( mutex );
 				outgoing.push_back( msg );
 			}
 		}
+	}
+	
+	bool ABBFeedbackInterface::HasFeedback() const
+	{
+		boost::unique_lock<boost::mutex> lock( mutex );
+		return !outgoing.empty();
+	}
+	
+	Feedback ABBFeedbackInterface::GetFeedback()
+	{
+		boost::unique_lock<boost::mutex> lock( mutex );
+		Feedback ret = outgoing.front();
+		outgoing.pop_front();
+		return ret;
 	}
 	
 }

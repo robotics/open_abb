@@ -24,7 +24,6 @@
 //standard libary messages instead of custom messages
 #include <tf/transform_broadcaster.h>
 #include <sensor_msgs/JointState.h>
-#include <geometry_msgs/WrenchStamped.h>
 #include <geometry_msgs/PoseStamped.h>
 
 #define ID_CODE_MAX 999
@@ -91,12 +90,6 @@ namespace open_abb_driver
 		bool robot_SetWorkObject(
 			open_abb_driver::robot_SetWorkObject::Request& req, 
 			open_abb_driver::robot_SetWorkObject::Response& res);
-		bool robot_SetComm(
-			open_abb_driver::robot_SetComm::Request& req, 
-			open_abb_driver::robot_SetComm::Response& res);
-		bool robot_SpecialCommand(
-			open_abb_driver::robot_SpecialCommand::Request& req,
-			open_abb_driver::robot_SpecialCommand::Response& res);
 		bool robot_SetDIO(
 			open_abb_driver::robot_SetDIO::Request& req, 
 			open_abb_driver::robot_SetDIO::Response& res);
@@ -158,11 +151,12 @@ namespace open_abb_driver
 		// Sets up the default robot configuration
 		bool ConfigureRobot();
 		
+		void FeedbackSpin();
+		
 		//handles to ROS stuff
 		tf::TransformBroadcaster handle_tf;
 		//Duplicates with standard messages
 		ros::Publisher handle_JointsLog;
-		ros::Publisher handle_ForceLog;
 		ros::Publisher handle_CartesianLog;
 		
 		ros::ServiceServer handle_Ping;
@@ -196,8 +190,29 @@ namespace open_abb_driver
 		double curJ[6];
 		double curForce[6];
 		
+		boost::thread feedbackWorker;
+		
 		bool SetWorkObject( double x, double y, double z, double q0, double q1,
 							double q2, double q3 );
+		
+	};
+	
+	/*! \brief Class to process the Feedback variant types */
+	class FeedbackVisitor
+		: public boost::static_visitor<>
+	{
+	public:
+		
+		FeedbackVisitor( ros::Publisher& handle_Joints, 
+						 ros::Publisher& handle_Cartesian );
+		
+		void operator()( const JointFeedback& fb );
+		void operator()( const CartesianFeedback& fb );
+		
+	private:
+		
+		ros::Publisher& jointPub;
+		ros::Publisher& cartesianPub;
 		
 	};
 	

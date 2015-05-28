@@ -10,7 +10,6 @@ namespace open_abb_driver
 		
 		handle_CartesianLog = privHandle.advertise<geometry_msgs::PoseStamped>("pose", 100);
 		handle_JointsLog = privHandle.advertise<sensor_msgs::JointState>("jointstate", 100);
-		handle_ForceLog = privHandle.advertise<geometry_msgs::WrenchStamped>("wrench", 100);
 	
 		handle_Ping = privHandle.advertiseService("Ping", &RobotController::robot_Ping, this);
 		handle_SetCartesian = privHandle.advertiseService("SetCartesian", &RobotController::robot_SetCartesian, this);
@@ -21,8 +20,9 @@ namespace open_abb_driver
 		handle_SetWorkObject = privHandle.advertiseService("SetWorkObject", &RobotController::robot_SetWorkObject, this);
 		handle_SetSpeed = privHandle.advertiseService("SetSpeed", &RobotController::robot_SetSpeed, this);
 		handle_SetZone = privHandle.advertiseService("SetZone", &RobotController::robot_SetZone, this);
-		handle_SpecialCommand = privHandle.advertiseService("SpecialCommand", &RobotController::robot_SpecialCommand, this);
 		handle_SetDIO = privHandle.advertiseService("SetDIO", &RobotController::robot_SetDIO, this);
+		
+		feedbackWorker = boost::thread( boost::bind( &RobotController::FeedbackSpin, this ) );
 	}
 	
 	RobotController::~RobotController() 
@@ -58,6 +58,20 @@ namespace open_abb_driver
 		}
 		
 		return true;
+	}
+	
+	void RobotController::FeedbackSpin()
+	{
+		FeedbackVisitor visitor( handle_JointsLog, handle_CartesianLog );
+		while( true )
+		{
+			feedbackInterface->Spin();
+			while( feedbackInterface->HasFeedback() )
+			{
+				Feedback fb = feedbackInterface->GetFeedback();
+				boost::apply_visitor( visitor, fb );
+			}
+		}
 	}
 
 	bool RobotController::SetWorkObject( double x, double y, double z, double q0, 
@@ -191,21 +205,44 @@ namespace open_abb_driver
 		return controlInterface->SetZone(req.mode);
 	}
 	
-	bool RobotController::robot_SpecialCommand(
-		open_abb_driver::robot_SpecialCommand::Request& req, 
-		open_abb_driver::robot_SpecialCommand::Response& res)
-	{
-		return controlInterface->SpecialCommand( req.command, req.param1, req.param2, 
-												 req.param3, req.param4, req.param5 );
-	}
-	
-	// Lock/Unlock tool changer
 	bool RobotController::robot_SetDIO(
 		open_abb_driver::robot_SetDIO::Request& req, 
 		open_abb_driver::robot_SetDIO::Response& res)
 	{
 		return controlInterface->SetDIO(req.DIO_num, req.state);
 	}
+	
+	FeedbackVisitor::FeedbackVisitor( ros::Publisher& handle_Joints,
+									  ros::Publisher& handle_Cartesian )
+		: jointPub( handle_Joints ), cartesianPub( handle_Cartesian )
+	{}
+	
+	void FeedbackVisitor::operator()( const JointFeedback& fb )
+	{
+		sensor_msgs::JointState jointMsg;
+		jointMsg.header.stamp = ros::Time::now(); // TODO Use abb timestamp
+		for( unsigned int i = 0; i < 6; i++ )
+		{
+			jointMsg.name.push_back( std::to_string( i ) );
+			jointMsg.position.push_back( fb.joints[i] );
+		}
+		jointPub.publish( jointMsg );
+	}
+	
+	void FeedbackVisitor::operator()( const CartesianFeedback& fb )
+	{
+		geometry_msgs::PoseStamped poseMsg;
+		poseMsg.header.stamp = ros::Time::now();
+		poseMsg.pose.position.x = fb.x;
+		poseMsg.pose.position.y = fb.y;
+		poseMsg.pose.position.z = fb.z;
+		poseMsg.pose.orientation.w = fb.qw;
+		poseMsg.pose.orientation.x = fb.qx;
+		poseMsg.pose.orientation.y = fb.qy;
+		poseMsg.pose.orientation.z = fb.qz;
+		cartesianPub.publish( poseMsg );
+	}
+	
 }
 
 int main(int argc, char** argv)

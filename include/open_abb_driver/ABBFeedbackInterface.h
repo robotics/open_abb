@@ -9,42 +9,45 @@
 
 namespace open_abb_driver
 {
+	struct JointFeedback
+	{
+		std::string date;
+		std::string time;
+		std::array<double,6> joints;
+	};
 	
+	struct CartesianFeedback
+	{
+		std::string date;
+		std::string time;
+		double x;
+		double y;
+		double z;
+		double qw;
+		double qx;
+		double qy;
+		double qz;
+	};
+		
+	typedef boost::variant< JointFeedback, CartesianFeedback > Feedback;
+		
 	class ABBFeedbackInterface 
 	{
 	public:
 		
 		typedef std::shared_ptr<ABBFeedbackInterface> Ptr;
 		
-		struct JointFeedback
-		{
-			std::string date;
-			std::string time;
-			std::array<double,6> joints;
-		};
-		
-		struct CartesianFeedback
-		{
-			std::string date;
-			std::string time;
-			double x;
-			double y;
-			double z;
-			double qw;
-			double qx;
-			double qy;
-			double qz;
-		};
-		
-		typedef boost::variant< JointFeedback, CartesianFeedback > Feedback;
 		
 		ABBFeedbackInterface( const std::string& ip, int port, size_t bufferSize = 10 );
 		~ABBFeedbackInterface();
 		
 		void Spin();
+		bool HasFeedback() const;
+		Feedback GetFeedback();
 		
 	private:
 		
+		mutable boost::mutex mutex;
 		int loggerSocket;
 		
 		boost::circular_buffer<Feedback> outgoing;
