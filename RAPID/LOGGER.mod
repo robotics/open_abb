@@ -73,7 +73,6 @@ PROC main()
 		IF connected = TRUE THEN
 			SocketSend clientSocket \Str:=data;
 		ENDIF
-		WaitTime loggerWaitTime;
 	
 		!Joint Coordinates
 		joints := CJointT();
