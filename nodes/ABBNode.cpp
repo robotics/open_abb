@@ -11,16 +11,16 @@ namespace open_abb_driver
 		handle_CartesianLog = privHandle.advertise<geometry_msgs::PoseStamped>("pose", 100);
 		handle_JointsLog = privHandle.advertise<sensor_msgs::JointState>("jointstate", 100);
 	
-		handle_Ping = privHandle.advertiseService("Ping", &RobotController::robot_Ping, this);
-		handle_SetCartesian = privHandle.advertiseService("SetCartesian", &RobotController::robot_SetCartesian, this);
-		handle_GetCartesian = privHandle.advertiseService("GetCartesian", &RobotController::robot_GetCartesian, this);
-		handle_SetJoints = privHandle.advertiseService("SetJoints", &RobotController::robot_SetJoints, this);
-		handle_GetJoints = privHandle.advertiseService("GetJoints", &RobotController::robot_GetJoints, this);
-		handle_SetTool = privHandle.advertiseService("SetTool", &RobotController::robot_SetTool, this);
-		handle_SetWorkObject = privHandle.advertiseService("SetWorkObject", &RobotController::robot_SetWorkObject, this);
-		handle_SetSpeed = privHandle.advertiseService("SetSpeed", &RobotController::robot_SetSpeed, this);
-		handle_SetZone = privHandle.advertiseService("SetZone", &RobotController::robot_SetZone, this);
-		handle_SetDIO = privHandle.advertiseService("SetDIO", &RobotController::robot_SetDIO, this);
+		handle_Ping = privHandle.advertiseService("ping", &RobotController::Ping, this);
+		handle_SetCartesian = privHandle.advertiseService("set_cartesian", &RobotController::SetCartesian, this);
+		handle_GetCartesian = privHandle.advertiseService("get_cartesian", &RobotController::GetCartesian, this);
+		handle_SetJoints = privHandle.advertiseService("set_joints", &RobotController::SetJoints, this);
+		handle_GetJoints = privHandle.advertiseService("get_joints", &RobotController::GetJoints, this);
+		handle_SetTool = privHandle.advertiseService("set_tool", &RobotController::SetTool, this);
+		handle_SetWorkObject = privHandle.advertiseService("set_work_object", &RobotController::SetWorkObject, this);
+		handle_SetSpeed = privHandle.advertiseService("set_speed", &RobotController::SetSpeed, this);
+		handle_SetZone = privHandle.advertiseService("set_zone", &RobotController::SetZone, this);
+		handle_SetDIO = privHandle.advertiseService("set_DIO", &RobotController::SetDIO, this);
 		
 		feedbackWorker = boost::thread( boost::bind( &RobotController::FeedbackSpin, this ) );
 	}
@@ -37,12 +37,12 @@ namespace open_abb_driver
 		int robotLoggerPort;
 		
 		ROS_INFO( "Connecting to the ABB motion server..." );
-		privHandle.param<std::string>( "robot_ip", robotIp, "192.168.125.1" );
-		privHandle.param( "robot_motion_port", robotMotionPort, 5000 );
+		privHandle.param<std::string>( "ip", robotIp, "192.168.125.1" );
+		privHandle.param( "motion_port", robotMotionPort, 5000 );
 		controlInterface = std::make_shared<ABBControlInterface>( robotIp, robotMotionPort );
 		
 		ROS_INFO( "Connecting to the ABB logger server..." );
-		privHandle.param( "robot_logger_port", robotLoggerPort, 5001 );
+		privHandle.param( "logger_port", robotLoggerPort, 5001 );
 		feedbackInterface = std::make_shared<ABBFeedbackInterface>( robotIp, robotLoggerPort );
 		
 		// Allocate space for all of our vectors
@@ -76,20 +76,20 @@ namespace open_abb_driver
 		}
 	}
 
-	bool RobotController::SetWorkObject( double x, double y, double z, double q0, 
+	bool RobotController::SetWorkObject( double x, double y, double z, double qw, 
 										 double qx, double qy, double qz )
 	{
-		if( !controlInterface->SetWorkObject( x, y, z, q0, qx, qy, qz ) ) { return false; }
+		if( !controlInterface->SetWorkObject( x, y, z, qw, qx, qy, qz ) ) { return false; }
 		
 		curWobjTransform.setOrigin(tf::Vector3(x, y, z));
-		curWobjTransform.setRotation(tf::Quaternion(qx, qy, qz, q0));
+		curWobjTransform.setRotation(tf::Quaternion(qx, qy, qz, qw));
 		return true;
 	}
 	
 	bool RobotController::ConfigureRobot()
 	{
-		double defWOx,defWOy,defWOz,defWOq0,defWOqx,defWOqy,defWOqz;
-		double defTx,defTy,defTz,defTq0,defTqx,defTqy,defTqz;
+		double defWOx,defWOy,defWOz,defWOqw,defWOqx,defWOqy,defWOqz;
+		double defTx,defTy,defTz,defTqw,defTqx,defTqy,defTqz;
 		int zone;
 		double speedTCP, speedORI;
 		
@@ -97,12 +97,12 @@ namespace open_abb_driver
 		privHandle.param("workobject_x",defWOx,0.0);
 		privHandle.param("workobject_y",defWOy,0.0);
 		privHandle.param("workobject_z",defWOz,0.0);
-		privHandle.param("workobject_qw",defWOq0,1.0);
+		privHandle.param("workobject_qw",defWOqw,1.0);
 		privHandle.param("workobject_qx",defWOqx,0.0);
 		privHandle.param("workobject_qy",defWOqy,0.0);
 		privHandle.param("workobject_qz",defWOqz,0.0);
 		
-		if( !SetWorkObject(defWOx,defWOy,defWOz,defWOq0,defWOqx,defWOqy,defWOqz))
+		if( !SetWorkObject(defWOx,defWOy,defWOz,defWOqw,defWOqx,defWOqy,defWOqz))
 		{
 			ROS_WARN( "Unable to set the work object." );
 			return false;
@@ -114,12 +114,12 @@ namespace open_abb_driver
 		privHandle.param("tool_x",defTx,0.0);
 		privHandle.param("tool_y",defTy,0.0);
 		privHandle.param("tool_z",defTz,0.0);
-		privHandle.param("tool_qw",defTq0,1.0);
+		privHandle.param("tool_qw",defTqw,1.0);
 		privHandle.param("tool_qx",defTqx,0.0);
 		privHandle.param("tool_qy",defTqy,0.0);
 		privHandle.param("tool_qz",defTqz,0.0);
 		
-		if( !controlInterface->SetTool(defTx,defTy,defTz,defTq0,defTqx,defTqy,defTqz))
+		if( !controlInterface->SetTool(defTx,defTy,defTz,defTqw,defTqx,defTqy,defTqz))
 		{
 			ROS_WARN( "Unable to set the tool." );
 			return false;
@@ -145,30 +145,30 @@ namespace open_abb_driver
 		return true;
 	}
 	
-	bool RobotController::robot_Ping(open_abb_driver::robot_Ping::Request& req, 
-									 open_abb_driver::robot_Ping::Response& res)
+	bool RobotController::Ping(open_abb_driver::Ping::Request& req, 
+									 open_abb_driver::Ping::Response& res)
 	{
 		return controlInterface->Ping();
 	}
 	
-	bool RobotController::robot_SetCartesian(
-		open_abb_driver::robot_SetCartesian::Request& req, 
-		open_abb_driver::robot_SetCartesian::Response& res)
+	bool RobotController::SetCartesian(
+		open_abb_driver::SetCartesian::Request& req, 
+		open_abb_driver::SetCartesian::Response& res)
 	{
-		return controlInterface->SetCartesian(req.cartesian[0], req.cartesian[1], req.cartesian[2],
-			req.quaternion[0], req.quaternion[1], req.quaternion[2], req.quaternion[3]);
+		return controlInterface->SetCartesian(req.x, req.y, req.z,
+			req.qw, req.qx, req.qy, req.qz);
 	}
 	
-	bool RobotController::robot_GetCartesian(
-		open_abb_driver::robot_GetCartesian::Request& req, 
-		open_abb_driver::robot_GetCartesian::Response& res)
+	bool RobotController::GetCartesian(
+		open_abb_driver::GetCartesian::Request& req, 
+		open_abb_driver::GetCartesian::Response& res)
 	{
-		return controlInterface->GetCartesian(res.x, res.y, res.z, res.q0, res.qx, res.qy, res.qz);
+		return controlInterface->GetCartesian(res.x, res.y, res.z, res.qw, res.qx, res.qy, res.qz);
 	}
 	
-	bool RobotController::robot_SetJoints(
-		open_abb_driver::robot_SetJoints::Request& req, 
-		open_abb_driver::robot_SetJoints::Response& res)
+	bool RobotController::SetJoints(
+		open_abb_driver::SetJoints::Request& req, 
+		open_abb_driver::SetJoints::Response& res)
 	{	
 		// ROS currently uses boost::array, so we have to copy it to maintain compatibility
 		std::array<double,6> position;
@@ -176,9 +176,9 @@ namespace open_abb_driver
 		return controlInterface->SetJoints( position );
 	}
 	
-	bool RobotController::robot_GetJoints(
-		open_abb_driver::robot_GetJoints::Request& req, 
-		open_abb_driver::robot_GetJoints::Response& res)
+	bool RobotController::GetJoints(
+		open_abb_driver::GetJoints::Request& req, 
+		open_abb_driver::GetJoints::Response& res)
 	{
 		std::array<double,6> position;
 		if( controlInterface->GetJoints(position) )
@@ -189,37 +189,37 @@ namespace open_abb_driver
 		else { return false; }
 	}
 	
-	bool RobotController::robot_SetTool(
-		open_abb_driver::robot_SetTool::Request& req, 
-		open_abb_driver::robot_SetTool::Response& res)
+	bool RobotController::SetTool(
+		open_abb_driver::SetTool::Request& req, 
+		open_abb_driver::SetTool::Response& res)
 	{
-		return controlInterface->SetTool(req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz);
+		return controlInterface->SetTool(req.x, req.y, req.z, req.qw, req.qx, req.qy, req.qz);
 	}
 	
-	bool RobotController::robot_SetWorkObject(
-		open_abb_driver::robot_SetWorkObject::Request& req, 
-		open_abb_driver::robot_SetWorkObject::Response& res)
+	bool RobotController::SetWorkObject(
+		open_abb_driver::SetWorkObject::Request& req, 
+		open_abb_driver::SetWorkObject::Response& res)
 	{
-		return controlInterface->SetWorkObject(req.x, req.y, req.z, req.q0, req.qx, req.qy, req.qz);
+		return controlInterface->SetWorkObject(req.x, req.y, req.z, req.qw, req.qx, req.qy, req.qz);
 	}
 	
-	bool RobotController::robot_SetSpeed(
-		open_abb_driver::robot_SetSpeed::Request& req, 
-		open_abb_driver::robot_SetSpeed::Response& res)
+	bool RobotController::SetSpeed(
+		open_abb_driver::SetSpeed::Request& req, 
+		open_abb_driver::SetSpeed::Response& res)
 	{
 		return controlInterface->SetSpeed(req.tcp, req.ori);
 	}
 	
-	bool RobotController::robot_SetZone(
-		open_abb_driver::robot_SetZone::Request& req, 
-		open_abb_driver::robot_SetZone::Response& res)
+	bool RobotController::SetZone(
+		open_abb_driver::SetZone::Request& req, 
+		open_abb_driver::SetZone::Response& res)
 	{
 		return controlInterface->SetZone(req.mode);
 	}
 	
-	bool RobotController::robot_SetDIO(
-		open_abb_driver::robot_SetDIO::Request& req, 
-		open_abb_driver::robot_SetDIO::Response& res)
+	bool RobotController::SetDIO(
+		open_abb_driver::SetDIO::Request& req, 
+		open_abb_driver::SetDIO::Response& res)
 	{
 		return controlInterface->SetDIO(req.DIO_num, req.state);
 	}
@@ -259,7 +259,7 @@ namespace open_abb_driver
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "robot_controller");
+	ros::init(argc, argv, "controller");
 	ros::NodeHandle nh;
 	ros::NodeHandle ph( "~" );
 	open_abb_driver::RobotController ABBrobot( nh, ph );

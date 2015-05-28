@@ -10,17 +10,16 @@ find_package( catkin 	REQUIRED
 						tf )
 
 add_service_files(
-	FILES 			robot_GetCartesian.srv
-					robot_GetJoints.srv
-					robot_Ping.srv
-					robot_SetCartesian.srv
-					robot_SetDIO.srv
-					robot_SetJoints.srv
-					robot_SetSpeed.srv
-					robot_SetTool.srv
-					robot_SetWorkObject.srv
-					robot_SetZone.srv
-					robot_SpecialCommand.srv
+	FILES 			GetCartesian.srv
+					GetJoints.srv
+					Ping.srv
+					SetCartesian.srv
+					SetDIO.srv
+					SetJoints.srv
+					SetSpeed.srv
+					SetTool.srv
+					SetWorkObject.srv
+					SetZone.srv
 )
 
 generate_messages()

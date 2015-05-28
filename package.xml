@@ -3,7 +3,7 @@
   <name>open_abb_driver</name>
   <version>0.0.0</version>
   <description>A driver for ABB industrial robot arms.</description>
-  <author>Alberto Rodriguez, Robbie Paolini, Michael Dawson-Haggerty</author>
+  <author>Alberto Rodriguez, Robbie Paolini, Michael Dawson-Haggerty, Humphrey Hu</author>
   <maintainer email="humhu@cmu.edu">Humphrey Hu</maintainer>
 
 

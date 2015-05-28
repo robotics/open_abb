@@ -5,20 +5,16 @@
 //ROS specific
 #include <ros/ros.h>
 
-#include <open_abb_driver/robot_Ping.h>
-#include <open_abb_driver/robot_SetCartesian.h>
-#include <open_abb_driver/robot_GetCartesian.h>
-#include <open_abb_driver/robot_SetWorkObject.h>
-#include <open_abb_driver/robot_SetZone.h>
-#include <open_abb_driver/robot_SetTool.h>
-#include <open_abb_driver/robot_SetComm.h>
-#include <open_abb_driver/robot_SetJoints.h>
-#include <open_abb_driver/robot_GetJoints.h>
-#include <open_abb_driver/robot_SetSpeed.h>
-#include <open_abb_driver/robot_SetDIO.h>
-#include <open_abb_driver/robot_SpecialCommand.h>
-#include <open_abb_driver/robot_Stop.h>
-#include <open_abb_driver/robot_SetTrackDist.h>
+#include <open_abb_driver/Ping.h>
+#include <open_abb_driver/SetCartesian.h>
+#include <open_abb_driver/GetCartesian.h>
+#include <open_abb_driver/SetWorkObject.h>
+#include <open_abb_driver/SetZone.h>
+#include <open_abb_driver/SetTool.h>
+#include <open_abb_driver/SetJoints.h>
+#include <open_abb_driver/GetJoints.h>
+#include <open_abb_driver/SetSpeed.h>
+#include <open_abb_driver/SetDIO.h>
 
 //ROS specific, these are redundant with abb_node
 //standard libary messages instead of custom messages
@@ -69,36 +65,36 @@ namespace open_abb_driver
 		~RobotController();
 		
 		// Service Callbacks
-		bool robot_Ping(
-			open_abb_driver::robot_Ping::Request& req, 
-			open_abb_driver::robot_Ping::Response& res);
-		bool robot_SetCartesian(
-			open_abb_driver::robot_SetCartesian::Request& req, 
-			open_abb_driver::robot_SetCartesian::Response& res);
-		bool robot_GetCartesian(
-			open_abb_driver::robot_GetCartesian::Request& req, 
-			open_abb_driver::robot_GetCartesian::Response& res);
-		bool robot_SetJoints(
-			open_abb_driver::robot_SetJoints::Request& req, 
-			open_abb_driver::robot_SetJoints::Response& res);
-		bool robot_GetJoints(
-			open_abb_driver::robot_GetJoints::Request& req, 
-			open_abb_driver::robot_GetJoints::Response& res);
-		bool robot_SetTool(
-			open_abb_driver::robot_SetTool::Request& req, 
-			open_abb_driver::robot_SetTool::Response& res);
-		bool robot_SetWorkObject(
-			open_abb_driver::robot_SetWorkObject::Request& req, 
-			open_abb_driver::robot_SetWorkObject::Response& res);
-		bool robot_SetDIO(
-			open_abb_driver::robot_SetDIO::Request& req, 
-			open_abb_driver::robot_SetDIO::Response& res);
-		bool robot_SetSpeed(
-			open_abb_driver::robot_SetSpeed::Request& req, 
-			open_abb_driver::robot_SetSpeed::Response& res);
-		bool robot_SetZone(
-			open_abb_driver::robot_SetZone::Request& req, 
-			open_abb_driver::robot_SetZone::Response& res);
+		bool Ping(
+			open_abb_driver::Ping::Request& req, 
+			open_abb_driver::Ping::Response& res);
+		bool SetCartesian(
+			open_abb_driver::SetCartesian::Request& req, 
+			open_abb_driver::SetCartesian::Response& res);
+		bool GetCartesian(
+			open_abb_driver::GetCartesian::Request& req, 
+			open_abb_driver::GetCartesian::Response& res);
+		bool SetJoints(
+			open_abb_driver::SetJoints::Request& req, 
+			open_abb_driver::SetJoints::Response& res);
+		bool GetJoints(
+			open_abb_driver::GetJoints::Request& req, 
+			open_abb_driver::GetJoints::Response& res);
+		bool SetTool(
+			open_abb_driver::SetTool::Request& req, 
+			open_abb_driver::SetTool::Response& res);
+		bool SetWorkObject(
+			open_abb_driver::SetWorkObject::Request& req, 
+			open_abb_driver::SetWorkObject::Response& res);
+		bool SetDIO(
+			open_abb_driver::SetDIO::Request& req, 
+			open_abb_driver::SetDIO::Response& res);
+		bool SetSpeed(
+			open_abb_driver::SetSpeed::Request& req, 
+			open_abb_driver::SetSpeed::Response& res);
+		bool SetZone(
+			open_abb_driver::SetZone::Request& req, 
+			open_abb_driver::SetZone::Response& res);
 		
 		// Call back function for the logging which will be called by a timer event
 		void logCallback(const ros::TimerEvent&);
