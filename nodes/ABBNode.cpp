@@ -9,7 +9,7 @@ namespace open_abb_driver
 		Initialize();
 		
 		handle_CartesianLog = privHandle.advertise<geometry_msgs::PoseStamped>("pose", 100);
-		handle_JointsLog = privHandle.advertise<sensor_msgs::JointState>("jointstate", 100);
+		handle_JointsLog = privHandle.advertise<sensor_msgs::JointState>("joint_state", 100);
 	
 		handle_Ping = privHandle.advertiseService("ping", &RobotController::Ping, this);
 		handle_SetCartesian = privHandle.advertiseService("set_cartesian", &RobotController::SetCartesian, this);
@@ -21,6 +21,8 @@ namespace open_abb_driver
 		handle_SetSpeed = privHandle.advertiseService("set_speed", &RobotController::SetSpeed, this);
 		handle_SetZone = privHandle.advertiseService("set_zone", &RobotController::SetZone, this);
 		handle_SetDIO = privHandle.advertiseService("set_DIO", &RobotController::SetDIO, this);
+		handle_UnwindAxes = privHandle.advertiseService("unwind_axes", &RobotController::UnwindAxes, this);
+
 		
 		feedbackWorker = boost::thread( boost::bind( &RobotController::FeedbackSpin, this ) );
 	}
@@ -145,30 +147,23 @@ namespace open_abb_driver
 		return true;
 	}
 	
-	bool RobotController::Ping(open_abb_driver::Ping::Request& req, 
-									 open_abb_driver::Ping::Response& res)
+	bool RobotController::Ping( Ping::Request& req, Ping::Response& res )
 	{
 		return controlInterface->Ping();
 	}
 	
-	bool RobotController::SetCartesian(
-		open_abb_driver::SetCartesian::Request& req, 
-		open_abb_driver::SetCartesian::Response& res)
+	bool RobotController::SetCartesian( SetCartesian::Request& req, SetCartesian::Response& res )
 	{
 		return controlInterface->SetCartesian(req.x, req.y, req.z,
 			req.qw, req.qx, req.qy, req.qz);
 	}
 	
-	bool RobotController::GetCartesian(
-		open_abb_driver::GetCartesian::Request& req, 
-		open_abb_driver::GetCartesian::Response& res)
+	bool RobotController::GetCartesian( GetCartesian::Request& req, GetCartesian::Response& res )
 	{
 		return controlInterface->GetCartesian(res.x, res.y, res.z, res.qw, res.qx, res.qy, res.qz);
 	}
 	
-	bool RobotController::SetJoints(
-		open_abb_driver::SetJoints::Request& req, 
-		open_abb_driver::SetJoints::Response& res)
+	bool RobotController::SetJoints( SetJoints::Request& req, SetJoints::Response& res )
 	{	
 		// ROS currently uses boost::array, so we have to copy it to maintain compatibility
 		std::array<double,6> position;
@@ -176,9 +171,7 @@ namespace open_abb_driver
 		return controlInterface->SetJoints( position );
 	}
 	
-	bool RobotController::GetJoints(
-		open_abb_driver::GetJoints::Request& req, 
-		open_abb_driver::GetJoints::Response& res)
+	bool RobotController::GetJoints( GetJoints::Request& req, GetJoints::Response& res )
 	{
 		std::array<double,6> position;
 		if( controlInterface->GetJoints(position) )
@@ -189,40 +182,38 @@ namespace open_abb_driver
 		else { return false; }
 	}
 	
-	bool RobotController::SetTool(
-		open_abb_driver::SetTool::Request& req, 
-		open_abb_driver::SetTool::Response& res)
+	bool RobotController::SetTool( SetTool::Request& req, SetTool::Response& res )
 	{
 		return controlInterface->SetTool(req.x, req.y, req.z, req.qw, req.qx, req.qy, req.qz);
 	}
 	
-	bool RobotController::SetWorkObject(
-		open_abb_driver::SetWorkObject::Request& req, 
-		open_abb_driver::SetWorkObject::Response& res)
+	bool RobotController::SetWorkObject( SetWorkObject::Request& req, SetWorkObject::Response& res )
 	{
 		return controlInterface->SetWorkObject(req.x, req.y, req.z, req.qw, req.qx, req.qy, req.qz);
 	}
 	
-	bool RobotController::SetSpeed(
-		open_abb_driver::SetSpeed::Request& req, 
-		open_abb_driver::SetSpeed::Response& res)
+	bool RobotController::SetSpeed( SetSpeed::Request& req, SetSpeed::Response& res )
 	{
 		return controlInterface->SetSpeed(req.tcp, req.ori);
 	}
 	
-	bool RobotController::SetZone(
-		open_abb_driver::SetZone::Request& req, 
-		open_abb_driver::SetZone::Response& res)
+	bool RobotController::SetZone( SetZone::Request& req, SetZone::Response& res )
 	{
 		return controlInterface->SetZone(req.mode);
 	}
 	
-	bool RobotController::SetDIO(
-		open_abb_driver::SetDIO::Request& req, 
-		open_abb_driver::SetDIO::Response& res)
+	bool RobotController::SetDIO( SetDIO::Request& req, SetDIO::Response& res )
 	{
 		return controlInterface->SetDIO(req.DIO_num, req.state);
 	}
+	
+	bool RobotController::UnwindAxes( UnwindAxes::Request& req, UnwindAxes::Response& res )
+	{
+		std::array<double,6> thresholds;
+		std::copy( req.thresholds.begin(), req.thresholds.end(), thresholds.begin() );
+		return controlInterface->UnwindAxes( thresholds );
+	}
+
 	
 	FeedbackVisitor::FeedbackVisitor( ros::Publisher& handle_Joints,
 									  ros::Publisher& handle_Cartesian )
@@ -235,7 +226,7 @@ namespace open_abb_driver
 		jointMsg.header.stamp = ros::Time::now(); // TODO Use abb timestamp
 		for( unsigned int i = 0; i < 6; i++ )
 		{
-			jointMsg.name.push_back( std::to_string( i ) );
+			jointMsg.name.push_back( std::to_string( i+1 ) );
 			jointMsg.position.push_back( fb.joints[i] );
 		}
 		jointPub.publish( jointMsg );

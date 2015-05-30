@@ -20,6 +20,7 @@ add_service_files(
 					SetTool.srv
 					SetWorkObject.srv
 					SetZone.srv
+					UnwindAxes.srv
 )
 
 generate_messages()

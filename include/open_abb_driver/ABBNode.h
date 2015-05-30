@@ -15,6 +15,7 @@
 #include <open_abb_driver/GetJoints.h>
 #include <open_abb_driver/SetSpeed.h>
 #include <open_abb_driver/SetDIO.h>
+#include <open_abb_driver/UnwindAxes.h>
 
 //ROS specific, these are redundant with abb_node
 //standard libary messages instead of custom messages
@@ -65,37 +66,18 @@ namespace open_abb_driver
 		~RobotController();
 		
 		// Service Callbacks
-		bool Ping(
-			open_abb_driver::Ping::Request& req, 
-			open_abb_driver::Ping::Response& res);
-		bool SetCartesian(
-			open_abb_driver::SetCartesian::Request& req, 
-			open_abb_driver::SetCartesian::Response& res);
-		bool GetCartesian(
-			open_abb_driver::GetCartesian::Request& req, 
-			open_abb_driver::GetCartesian::Response& res);
-		bool SetJoints(
-			open_abb_driver::SetJoints::Request& req, 
-			open_abb_driver::SetJoints::Response& res);
-		bool GetJoints(
-			open_abb_driver::GetJoints::Request& req, 
-			open_abb_driver::GetJoints::Response& res);
-		bool SetTool(
-			open_abb_driver::SetTool::Request& req, 
-			open_abb_driver::SetTool::Response& res);
-		bool SetWorkObject(
-			open_abb_driver::SetWorkObject::Request& req, 
-			open_abb_driver::SetWorkObject::Response& res);
-		bool SetDIO(
-			open_abb_driver::SetDIO::Request& req, 
-			open_abb_driver::SetDIO::Response& res);
-		bool SetSpeed(
-			open_abb_driver::SetSpeed::Request& req, 
-			open_abb_driver::SetSpeed::Response& res);
-		bool SetZone(
-			open_abb_driver::SetZone::Request& req, 
-			open_abb_driver::SetZone::Response& res);
-		
+		bool Ping( Ping::Request& req, Ping::Response& res );
+		bool SetCartesian( SetCartesian::Request& req, SetCartesian::Response& res );
+		bool GetCartesian( GetCartesian::Request& req, GetCartesian::Response& res );
+		bool SetJoints( SetJoints::Request& req, SetJoints::Response& res );
+		bool GetJoints( GetJoints::Request& req, GetJoints::Response& res );
+		bool SetTool( SetTool::Request& req, SetTool::Response& res );
+		bool SetWorkObject( SetWorkObject::Request& req, SetWorkObject::Response& res );
+		bool SetDIO( SetDIO::Request& req, SetDIO::Response& res );
+		bool SetSpeed( SetSpeed::Request& req, SetSpeed::Response& res );
+		bool SetZone( SetZone::Request& req, SetZone::Response& res );
+		bool UnwindAxes( UnwindAxes::Request& req, UnwindAxes::Response& res );
+			
 		// Call back function for the logging which will be called by a timer event
 		void logCallback(const ros::TimerEvent&);
 		
@@ -166,6 +148,7 @@ namespace open_abb_driver
 		ros::ServiceServer handle_SetZone;
 		ros::ServiceServer handle_SpecialCommand;
 		ros::ServiceServer handle_SetDIO;
+		ros::ServiceServer handle_UnwindAxes;
 		
 		// Functions to handle setting up non-blocking step sizes
 		bool setTrackDist(double pos_dist, double ang_dist);

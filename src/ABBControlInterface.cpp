@@ -133,7 +133,9 @@ namespace open_abb_driver
 			return true;
 		}
 		else
+		{
 			return false;
+		}
 	}
 	
 	bool ABBControlInterface::SetTool( double x, double y, double z, double q0, double qx, double qy, double qz )
@@ -235,7 +237,29 @@ namespace open_abb_driver
 		return false;
 	}
 	
-	
+	bool ABBControlInterface::UnwindAxes( const std::array<double,6>& thresholds )
+	{
+		std::array<double,6> joints;
+		double x, y, z, qw, qx, qy, qz;
+		if( !GetCartesian( x, y, z, qw, qx, qy, qz ) ) { return false; }
+		if( !GetJoints( joints ) ) { return false; }
+		
+		bool anyUnwind = false;
+		for( unsigned int i = 0; i < 6; i++ )
+		{
+			if( std::abs( joints[i] ) > thresholds[i] ) 
+			{
+				std::cout << "Unwinding joint " << i+1 << " from " << joints[i] << std::endl;
+				joints[i] = 0;
+				anyUnwind = true;
+			}
+		}
+				
+		if( !anyUnwind ) { return true; }
+		if( !SetJoints( joints ) ) { return false; }
+		if( !SetCartesian( x, y, z, qw, qx, qy, qz ) ) { return false; }
+		return true;
+	}
 	
 	double ABBControlInterface::NormalizeQuaternion( double& q0, double& qx, double& qy, double& qz )
 	{

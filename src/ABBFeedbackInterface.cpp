@@ -85,6 +85,7 @@ namespace open_abb_driver
 				// The number after the start character is the type of message
 				sscanf(partialBuffer,"%d", &code);
 				Feedback msg;
+				
 				if( code == 0 )
 				{
 					CartesianFeedback cmsg;
@@ -107,8 +108,8 @@ namespace open_abb_driver
 					JointFeedback jmsg;
 					char date[2000];
 					char time[2000];
-					sscanf(partialBuffer,"# %*d %s %s %*f %lf %lf %lf %lf %lf %lf",
-											date,
+					sscanf(partialBuffer,"%*d %s %s %*f %lf %lf %lf %lf %lf %lf",
+										date,
 										time,
 										&jmsg.joints[0],
 										&jmsg.joints[1],
@@ -122,7 +123,6 @@ namespace open_abb_driver
 					{
 						jmsg.joints[i] *= DEG_2_RAD;
 					}
-					
 					msg = jmsg;
 				}
 				else

@@ -68,6 +68,9 @@ namespace open_abb_driver
 		/*! \brief Set the tracking precision (zone) index. */
 		bool SetZone( int z );
 		
+		/*! \brief Resets over-limit axes back to 0 and retries Cartesian command. */
+		bool UnwindAxes( const std::array<double,6>& thresholds );
+		
 	private:
 		
 		enum ServerAck
