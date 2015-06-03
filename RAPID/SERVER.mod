@@ -5,8 +5,8 @@ MODULE SERVER
 !////////////////
 
 !//Robot configuration
-PERS tooldata currentTool := [TRUE,[[0,0,0],[1,0,0,0]],[0.001,[0,0,0.001],[1,0,0,0],0,0,0]];    
-PERS wobjdata currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[0,0,0],[1,0,0,0]]];   
+PERS tooldata currentTool := [TRUE,[[-22.7,12.3,39.2],[1,0,0,0]],[0.001,[0,0,0.001],[1,0,0,0],0,0,0]];    
+PERS wobjdata currentWobj := [FALSE,TRUE,"",[[0,0,0],[1,0,0,0]],[[543.7,-681.7,171.6],[1,0,0,0]]];   
 PERS speeddata currentSpeed;
 PERS zonedata currentZone;
 
@@ -160,13 +160,14 @@ PROC main()
     VAR jointtarget jointsPose;
     			
     !//Motion configuration
+    ConfJ \Off;
     ConfL \Off;
     SingArea \Wrist;
     moveCompleted:= TRUE;
 	
     !//Initialization of WorkObject, Tool, Speed and Zone
     Initialize;
-
+    
     !//Socket connection
     connected:=FALSE;
     ServerCreateAndConnect ipController,serverPort;	
@@ -192,14 +193,18 @@ PROC main()
                 ENDIF
 
             CASE 1: !Cartesian Move
-                IF nParams = 7 THEN
+                IF nParams = 8 THEN
                     cartesianTarget :=[[params{1},params{2},params{3}],
                                        [params{4},params{5},params{6},params{7}],
                                        [0,0,0,0],
                                        externalAxis];
                     ok := SERVER_OK;
                     moveCompleted := FALSE;
-                    MoveL cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
+                    IF params{8} = 1 THEN
+                        MoveL cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
+                    ELSE
+                        MoveJ cartesianTarget, currentSpeed, currentZone, currentTool \WObj:=currentWobj ;
+                    ENDIF
                     moveCompleted := TRUE;
                 ELSE
                     ok := SERVER_BAD_MSG;
@@ -323,7 +328,21 @@ PROC main()
                 ELSE
                     ok:=SERVER_BAD_MSG;
                 ENDIF
-
+                
+            CASE 11: !Set servos
+                IF nParams = 6 THEN
+                    SoftDeact;
+                    SoftAct 1, params{1};
+                    SoftAct 2, params{2};
+                    SoftAct 3, params{3};
+                    SoftAct 4, params{4};
+                    SoftAct 5, params{5};
+                    SoftAct 6, params{6};
+                    ok := SERVER_OK;
+                ELSE
+                    ok := SERVER_BAD_MSG;
+                ENDIF
+                    
             CASE 30: !Add Cartesian Coordinates to buffer
                 IF nParams = 7 THEN
                     cartesianTarget :=[[params{1},params{2},params{3}],
@@ -414,6 +433,7 @@ PROC main()
 			
             CASE 99: !Close Connection
                 IF nParams = 0 THEN
+                    SoftDeact;
                     TPWrite "SERVER: Client has closed connection.";
                     connected := FALSE;
                     !//Closing the server
