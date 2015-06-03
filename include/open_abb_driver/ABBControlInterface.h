@@ -46,7 +46,7 @@ namespace open_abb_driver
 		bool Ping();
 
 		/*! \brief Specify the TCP cartesian coordinates in meters. */
-		bool SetCartesian( double x, double y, double z, double q0, double qx, double qy, double qz );
+		bool SetCartesian( double x, double y, double z, double q0, double qx, double qy, double qz, bool linear );
 		/*! \brief Retrieve the TCP cartesian coordinates in meters. */
 		bool GetCartesian( double &x, double &y, double &z, double &q0, double &qx, double &qy, double &qz );
 		
@@ -60,13 +60,14 @@ namespace open_abb_driver
 		/*! \brief Specify the work object coordinate frame in meters. */
 		bool SetWorkObject( double x, double y, double z, double q0, double qx, double qy, double qz );
 		
-		bool SetDIO( int dio_num, int dio_state );
-		
 		/*! \brief Specify the translation and orientation speeds in m/s. */
 		bool SetSpeed( double tcp, double ori );
 		
 		/*! \brief Set the tracking precision (zone) index. */
 		bool SetZone( int z );
+		
+		/*! \brief Specify each joint softness [0-100]. */
+		bool SetSoftness( const std::array<double,6>& softness );
 		
 		/*! \brief Resets over-limit axes back to 0 and retries Cartesian command. */
 		bool UnwindAxes( const std::array<double,6>& thresholds );

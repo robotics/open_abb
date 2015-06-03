@@ -12,6 +12,10 @@
 #include "open_abb_driver/ABBProtocol.h"
 #include "open_abb_driver/ABBControlInterface.h"
 
+#include "ikfast/ikfast.h"
+
+#include <Eigen/Geometry>
+
 #define RAD_2_DEG (57.2957795)
 #define DEG_2_RAD (0.01745329251)
 #define MM_2_M (0.001)
@@ -69,30 +73,56 @@ namespace open_abb_driver
 		return SendAndReceive(message, reply);
 	}
 	
-	bool ABBControlInterface::SetCartesian(double x, double y, double z, 
-									   double q0, double qx, double qy, double qz)
+	bool ABBControlInterface::SetCartesian(double x, double y, double z, double qw, double qx, 
+										   double qy, double qz, bool linear)
 	{
+		
+		Eigen::Quaterniond quat( qw, qx, qy, qz );
+		Eigen::Matrix<double,3,3,Eigen::RowMajor> rotMat = quat.toRotationMatrix();
+		
+		ikfast::IkReal rot[9], trans[3];
+		// IK array is row-major
+		for( unsigned int i = 0; i < 9; i++ )
+		{
+			rot[i] = rotMat(i);
+		}
+		trans[0] = x; 
+		trans[1] = y; 
+		trans[2] = z;
+		
+		ikfast::IkSolutionList<ikfast::IkReal> solutions;
+		
+		bool success = ikfast::ComputeIk( trans, rot, NULL, solutions );
+		if( !success )
+		{
+			std::cout << "Failed to get IK solution." << std::endl;
+		}
+		else
+		{
+			std::cout << "Found " << solutions.GetNumSolutions() << " solutions!" << std::endl;
+		}
+		
 		// Inputs come in meters, commands given in millimeters
 		x *= M_2_MM;
 		y *= M_2_MM;
 		z *= M_2_MM;
-		NormalizeQuaternion( q0, qx, qy, qz );
+		NormalizeQuaternion( qw, qx, qy, qz );
 		
-		std::string message = ABBProtocol::SetCartesian(x, y, z, q0, qx, qy, qz);
+		std::string message = ABBProtocol::SetCartesian(x, y, z, qw, qx, qy, qz, linear);
 		char reply[max_buffer_len];
 		
 		return SendAndReceive(message, reply);
 	}
 	
 	bool ABBControlInterface::GetCartesian(double &x, double &y, double &z, 
-									   double &q0, double &qx, double &qy, double &qz)
+									   double &qw, double &qx, double &qy, double &qz)
 	{
 		std::string message = ABBProtocol::GetCartesian();
 		char reply[max_buffer_len];
 		
 		if(SendAndReceive(message, reply))
 		{
-			ABBProtocol::ParseCartesian(reply, &x, &y, &z, &q0, &qx, &qy, &qz);
+			ABBProtocol::ParseCartesian(reply, &x, &y, &z, &qw, &qx, &qy, &qz);
 			x *= MM_2_M;
 			y *= MM_2_M;
 			z *= MM_2_M;
@@ -138,31 +168,31 @@ namespace open_abb_driver
 		}
 	}
 	
-	bool ABBControlInterface::SetTool( double x, double y, double z, double q0, double qx, double qy, double qz )
+	bool ABBControlInterface::SetTool( double x, double y, double z, double qw, double qx, double qy, double qz )
 	{
-		NormalizeQuaternion( q0, qx, qy, qz );
+		NormalizeQuaternion( qw, qx, qy, qz );
 		x *= M_2_MM;
 		y *= M_2_MM;
 		z *= M_2_MM;
 		
 		char message[max_buffer_len];
 		char reply[max_buffer_len];
-		strcpy(message, ABBProtocol::SetTool( x, y, z, q0, qx, qy, qz ).c_str());
+		strcpy(message, ABBProtocol::SetTool( x, y, z, qw, qx, qy, qz ).c_str());
 		
 		return SendAndReceive( message, reply );
 	}
 	
 	// TODO Change from m to mm
-	bool ABBControlInterface::SetWorkObject( double x, double y, double z, double q0, double qx, double qy, double qz )
+	bool ABBControlInterface::SetWorkObject( double x, double y, double z, double qw, double qx, double qy, double qz )
 	{
-		NormalizeQuaternion( q0, qx, qy, qz );
+		NormalizeQuaternion( qw, qx, qy, qz );
 		x *= M_2_MM;
 		y *= M_2_MM;
 		z *= M_2_MM;
 		
 		char message[max_buffer_len];
 		char reply[max_buffer_len];
-		strcpy(message, ABBProtocol::SetWorkObject(x, y, z, q0, qx, qy, qz).c_str());
+		strcpy(message, ABBProtocol::SetWorkObject(x, y, z, qw, qx, qy, qz).c_str());
 		
 		return SendAndReceive(message, reply);
 	}
@@ -195,11 +225,14 @@ namespace open_abb_driver
 
 	}
 	
-	bool ABBControlInterface::SetDIO(int dio_num, int dio_state)
+	bool ABBControlInterface::SetSoftness( const std::array<double,6>& softness )
 	{
-		std::string message = ABBProtocol::SetDIO(dio_num, dio_state);
+		std::string message;
 		char reply[max_buffer_len];
-		return SendAndReceive(message, reply);
+		
+		message = ABBProtocol::SetSoftness( softness[0], softness[1], softness[2], 
+											softness[3], softness[4], softness[5] );
+		return SendAndReceive( message, reply );
 	}
 	
 	bool ABBControlInterface::SendAndReceive( const std::string& message, char* reply )
@@ -242,29 +275,34 @@ namespace open_abb_driver
 		std::array<double,6> joints;
 		double x, y, z, qw, qx, qy, qz;
 		if( !GetCartesian( x, y, z, qw, qx, qy, qz ) ) { return false; }
-		if( !GetJoints( joints ) ) { return false; }
-		
-		bool anyUnwind = false;
-		for( unsigned int i = 0; i < 6; i++ )
+
+		while( true )
 		{
-			if( std::abs( joints[i] ) > thresholds[i] ) 
+			if( !GetJoints( joints ) ) { return false; }
+			
+			bool anyUnwind = false;
+			for( unsigned int i = 0; i < 6; i++ )
 			{
-				std::cout << "Unwinding joint " << i+1 << " from " << joints[i] << std::endl;
-				joints[i] = 0;
-				anyUnwind = true;
+				if( std::abs( joints[i] ) > thresholds[i] ) 
+				{
+					joints[i] = 0; //0.01*std::rand();
+					anyUnwind = true;
+					std::cout << "Unwinding axis " << i+1 << " with thresh " << thresholds[i] << std::endl;
+				}
 			}
+					
+			if( !anyUnwind ) { break; }
+			
+			if( !SetJoints( joints ) ) { return false; }
+			if( !SetCartesian( x, y, z, qw, qx, qy, qz, false ) ) { return false; }
 		}
-				
-		if( !anyUnwind ) { return true; }
-		if( !SetJoints( joints ) ) { return false; }
-		if( !SetCartesian( x, y, z, qw, qx, qy, qz ) ) { return false; }
 		return true;
 	}
 	
-	double ABBControlInterface::NormalizeQuaternion( double& q0, double& qx, double& qy, double& qz )
+	double ABBControlInterface::NormalizeQuaternion( double& qw, double& qx, double& qy, double& qz )
 	{
-		double norm = std::sqrt( q0*q0 + qx*qx + qy*qy + qz*qz );
-		q0 = q0/norm;
+		double norm = std::sqrt( qw*qw + qx*qx + qy*qy + qz*qz );
+		qw = qw/norm;
 		qx = qx/norm;
 		qy = qy/norm;
 		qz = qz/norm;

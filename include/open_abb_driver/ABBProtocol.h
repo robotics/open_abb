@@ -30,9 +30,10 @@ public:
 	* @param qx Second component of the orientation quaternion.
 	* @param qy Third component of the orientation quaternion.
 	* @param qz Fourth component of the orientation quaternion.
+	* @param linear Whether to use linear tool movement
 	* @return String to be sent to ABB server. */
 	static std::string SetCartesian( double x, double y, double z, double q0, 
-									 double qx, double qy, double qz );
+									 double qx, double qy, double qz, bool linear = false );
 	
 	/*! \brief Formats message to set the joint coordinates of the ABB robot.
 	* @param joint1 Value of joint 1.
@@ -93,22 +94,43 @@ public:
 	static std::string SetZone(bool fine=0, double tcp_mm = 5.0, double ori_mm = 5.0, 
 							   double ori_deg = 1.0);
 	
-	/*! \brief Formats message to call special command.
-	* @param command Number identifying the special command.
-	* @param param1 General purpose parameter 1.
-	* @param param2 General purpose parameter 2.
-	* @param param3 General purpose parameter 3.
-	* @param param4 General purpose parameter 4.
-	* @param param5 General purpose parameter 5.
-	* @return String to be sent to ABB server. */
-	static std::string SpecialCommand(int command, double param1, double param2, 
-									  double param3, double param4, double param5);
+	/*! \brief Sets the servo softness for each axis. 0 is full stiffness, 100 is full softness. */
+	static std::string SetSoftness( double s1, double s2, double s3, double s4, double s5, double s6 );
 	
-	/*! \brief Formats message to set the vacuum on/off.
-	* @param vacuum 1-on 0-off.
-	* @param idCode User code identifying the message. Will be sent back with the acknowledgement.
+	/*! \brief Formats message to add a cartesian coordinate waypoint to the buffer.
+	* The coordinates are always with respect to the currently defined work object and tool.
+	* @param x X-coordinate of the robot.
+	* @param y Y-coordinate of the robot.
+	* @param z Z-coordinate of the robot.
+	* @param q0 First component of the orientation quaternion.
+	* @param qx Second component of the orientation quaternion.
+	* @param qy Third component of the orientation quaternion.
+	* @param qz Fourth component of the orientation quaternion.
 	* @return String to be sent to ABB server. */
-	static std::string SetDIO(int dio_number=0, int dio_state=0);
+	static std::string AddCartesianWaypoint( double x, double y, double z, double q0, 
+											 double qx, double qy, double qz );
+	
+	/*! \brief Formats message to clear all cartesian waypoints in the buffer. */
+	static std::string ClearWaypointBuffer();
+	
+	/*! \brief Formats message to request cartesian waypoint buffer size. */
+	static std::string GetBufferSize();
+	
+	/*! \brief Formats message to begin executing the waypoint buffer. */
+	static std::string ExecuteBuffer();
+	
+	/*! \brief Formats message to set circular move center point. */
+	static std::string SetCircularCenter( double x, double y, double z, double qw,
+										  double qx, double qy, double qz );
+	
+	/*! \brief Formats message to set and execute circular move target point. */
+	static std::string SetCircularTarget( double x, double y, double z, double qw,
+										  double qx, double qy, double qz );
+	
+	static std::string SetCircularTarget();
+	
+	/*! \brief Formats message to request the robot serial, robotware version, and type. */
+	static std::string GetRobotInfo();
 	
 	/*! \brief Formats message to close the connection with the server in the ABB robot.
 	* @param idCode User code identifying the message. Will be sent back with the acknowledgement.

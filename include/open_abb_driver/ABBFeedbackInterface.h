@@ -5,6 +5,8 @@
 #include <boost/variant.hpp>
 #include <boost/circular_buffer.hpp>
 
+#include "open_abb_driver/ABBKinematics.h"
+
 #include <memory>
 
 namespace open_abb_driver

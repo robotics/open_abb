@@ -9,6 +9,8 @@ find_package( catkin 	REQUIRED
 						message_generation
 						tf )
 
+find_package(Eigen3 REQUIRED)
+
 add_service_files(
 	FILES 			GetCartesian.srv
 					GetJoints.srv
@@ -20,7 +22,7 @@ add_service_files(
 					SetTool.srv
 					SetWorkObject.srv
 					SetZone.srv
-					UnwindAxes.srv
+					SetSoftness.srv
 )
 
 generate_messages()
@@ -28,37 +30,39 @@ generate_messages()
 catkin_package(
 	INCLUDE_DIRS	include
 	
-	LIBRARIES 		matvec
-					abb_comm
+	LIBRARIES 		abb_comm
+					abb2400_ikfast
 					
 	CATKIN_DEPENDS 	roscpp
 					tf
+					
+	DEPENDS 		Eigen3
 )
 
 include_directories( include
+					 ${EIGEN3_INCLUDE_DIR}
 					 ${catkin_INCLUDE_DIRS} )
-
-add_library( matvec 
-	src/matvec/HomogTransf.cpp
-	src/matvec/Mat.cpp
-	src/matvec/Polynom.cpp
-	src/matvec/Quaternion.cpp
-	src/matvec/RotMat.cpp
-	src/matvec/Vec.cpp )
 
 add_library( abb_comm 
 			 src/ABBProtocol.cpp
 			 src/ABBControlInterface.cpp
-			 src/ABBFeedbackInterface.cpp)
+			 src/ABBFeedbackInterface.cpp )
+
+add_library( abb2400_ikfast
+			 src/IKFastSolver.cpp
+			 src/ABBKinematics.cpp
+			 src/PoseSE3.cpp )
+			 
 add_dependencies( abb_comm ${open_abb_driver_EXPORTED_TARGETS} )
 target_link_libraries( abb_comm
+	abb2400_ikfast
 	${catkin_LIBRARIES} )
 
 add_executable( abb_node nodes/ABBNode.cpp )
 add_dependencies( abb_node ${PROJECT_NAME}_gencfg )
-target_link_libraries( abb_node abb_comm matvec )
+target_link_libraries( abb_node abb_comm )
 
-install( TARGETS abb_comm matvec abb_node
+install( TARGETS abb_comm abb_node
 	ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 	RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

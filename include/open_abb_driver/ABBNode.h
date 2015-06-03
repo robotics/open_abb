@@ -1,6 +1,7 @@
-#include "open_abb_driver/matvec/matVec.h"
 #include "open_abb_driver/ABBControlInterface.h"
 #include "open_abb_driver/ABBFeedbackInterface.h"
+#include "open_abb_driver/PoseSE3.h"
+#include "open_abb_driver/ABBKinematics.h"
 
 //ROS specific
 #include <ros/ros.h>
@@ -10,12 +11,11 @@
 #include <open_abb_driver/GetCartesian.h>
 #include <open_abb_driver/SetWorkObject.h>
 #include <open_abb_driver/SetZone.h>
+#include <open_abb_driver/SetSoftness.h>
 #include <open_abb_driver/SetTool.h>
 #include <open_abb_driver/SetJoints.h>
 #include <open_abb_driver/GetJoints.h>
 #include <open_abb_driver/SetSpeed.h>
-#include <open_abb_driver/SetDIO.h>
-#include <open_abb_driver/UnwindAxes.h>
 
 //ROS specific, these are redundant with abb_node
 //standard libary messages instead of custom messages
@@ -56,6 +56,8 @@
 
 #include <boost/thread/thread.hpp>
 
+#include <Eigen/Geometry>
+
 namespace open_abb_driver
 {
 	
@@ -66,18 +68,28 @@ namespace open_abb_driver
 		~RobotController();
 		
 		// Service Callbacks
-		bool Ping( Ping::Request& req, Ping::Response& res );
-		bool SetCartesian( SetCartesian::Request& req, SetCartesian::Response& res );
-		bool GetCartesian( GetCartesian::Request& req, GetCartesian::Response& res );
-		bool SetJoints( SetJoints::Request& req, SetJoints::Response& res );
-		bool GetJoints( GetJoints::Request& req, GetJoints::Response& res );
-		bool SetTool( SetTool::Request& req, SetTool::Response& res );
-		bool SetWorkObject( SetWorkObject::Request& req, SetWorkObject::Response& res );
-		bool SetDIO( SetDIO::Request& req, SetDIO::Response& res );
-		bool SetSpeed( SetSpeed::Request& req, SetSpeed::Response& res );
-		bool SetZone( SetZone::Request& req, SetZone::Response& res );
-		bool UnwindAxes( UnwindAxes::Request& req, UnwindAxes::Response& res );
-			
+		bool PingCallback( Ping::Request& req, Ping::Response& res );
+		bool SetCartesianCallback( SetCartesian::Request& req, SetCartesian::Response& res );
+		bool GetCartesianCallback( GetCartesian::Request& req, GetCartesian::Response& res );
+		bool SetJointsCallback( SetJoints::Request& req, SetJoints::Response& res );
+		bool GetJointsCallback( GetJoints::Request& req, GetJoints::Response& res );
+		bool SetToolCallback( SetTool::Request& req, SetTool::Response& res );
+		bool SetWorkObjectCallback( SetWorkObject::Request& req, SetWorkObject::Response& res );
+		bool SetSpeedCallback( SetSpeed::Request& req, SetSpeed::Response& res );
+		bool SetZoneCallback( SetZone::Request& req, SetZone::Response& res );
+		bool SetSoftnessCallback( SetSoftness::Request& req, SetSoftness::Response& res );
+		
+		bool Ping();
+		bool SetCartesian( const PoseSE3& pose );
+		bool GetCartesian( PoseSE3& pose );
+		bool SetJoints( const JointAngles& angles );
+		bool GetJoints( JointAngles& angles );
+		bool SetTool( const PoseSE3& pose );
+		bool SetWorkObject( const PoseSE3& pose );
+		bool SetSpeed( double linear, double orientation );
+		bool SetZone( unsigned int zone );
+		bool SetSoftness( const std::array<double,6>& softness );
+		
 		// Call back function for the logging which will be called by a timer event
 		void logCallback(const ros::TimerEvent&);
 		
@@ -93,10 +105,6 @@ namespace open_abb_driver
 		double curDist[3];      // Max allowable tracking error (pos, ang, joint)
 		
 		// Most recent goal position, and the final target position
-		matvec::Vec curGoalP;
-		matvec::Quaternion curGoalQ;
-		matvec::Vec curTargP;
-		matvec::Quaternion curTargQ;
 		double curGoalJ[6];
 		double curTargJ[6];
 		
@@ -122,6 +130,7 @@ namespace open_abb_driver
 		
 		ABBControlInterface::Ptr controlInterface;
 		ABBFeedbackInterface::Ptr feedbackInterface;
+		ABBKinematics ikSolver;
 		
 		// Initialize the robot
 		bool Initialize();
@@ -146,28 +155,16 @@ namespace open_abb_driver
 		ros::ServiceServer handle_SetWorkObject;
 		ros::ServiceServer handle_SetSpeed;
 		ros::ServiceServer handle_SetZone;
+		ros::ServiceServer handle_SetSoftness;
 		ros::ServiceServer handle_SpecialCommand;
-		ros::ServiceServer handle_SetDIO;
-		ros::ServiceServer handle_UnwindAxes;
 		
 		// Functions to handle setting up non-blocking step sizes
 		bool setTrackDist(double pos_dist, double ang_dist);
 		bool setNonBlockSpeed(double tcp, double ori);
 		
 		// Robot State
-		double curSpd[2];
-		int curZone;
-		matvec::Vec curToolP;
-		matvec::Quaternion curToolQ;
-		matvec::Vec curWorkP;
-		matvec::Quaternion curWorkQ;
-		tf::Transform curWobjTransform;
-		
-		// Robot Position and Force Information
-		matvec::Vec curP;
-		matvec::Quaternion curQ;
-		double curJ[6];
-		double curForce[6];
+		PoseSE3 currToolTrans;
+		PoseSE3 currWorkTrans;
 		
 		boost::thread feedbackWorker;
 		
