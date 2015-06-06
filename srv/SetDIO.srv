@@ -1,0 +1,4 @@
+#Service to set digital outputs on/off
+int64 DIO_num  #digital IO number
+bool state  #1-on; 0-off
+---

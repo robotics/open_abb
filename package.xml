@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package>
+  <name>open_abb_driver</name>
+  <version>0.0.0</version>
+  <description>A driver for ABB industrial robot arms.</description>
+  <author>Alberto Rodriguez, Robbie Paolini, Michael Dawson-Haggerty, Humphrey Hu</author>
+  <maintainer email="humhu@cmu.edu">Humphrey Hu</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>tf</build_depend>
+  
+  <run_depend>roscpp</run_depend>
+  <run_depend>tf</run_depend>
+  
+</package>

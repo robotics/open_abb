@@ -1,5 +1,0 @@
-#Service to Stop the robot
-
----
-int64 ret
-string msg

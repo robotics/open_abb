@@ -1,6 +1,0 @@
-# Service to Set Cartesians
-float64[] cartesian
-float64[] quaternion
----
-int64 ret
-string msg

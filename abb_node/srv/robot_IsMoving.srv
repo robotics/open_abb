@@ -1,6 +1,0 @@
-# Service to get whether robot is moving or not
-
----
-bool moving
-int64 ret
-string msg

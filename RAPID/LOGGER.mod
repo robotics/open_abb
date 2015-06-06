@@ -17,7 +17,7 @@ VAR zonedata currentZone;
 
 !//Logger sampling rate
 !PERS num loggerWaitTime:= 0.01;  !Recommended for real controller
-PERS num loggerWaitTime:= 0.1;    !Recommended for virtual controller
+PERS num loggerWaitTime:= 0.01;    !Recommended for virtual controller
 
 PROC ServerCreateAndConnect(string ip, num port)
 	VAR string clientIP;
@@ -59,21 +59,20 @@ PROC main()
 	WHILE TRUE DO
 		
 		!Cartesian Coordinates
-		position := CRobT(\Tool:=currentTool \WObj:=currentWObj);
-		data := "# 0 ";
-		data := data + date + " " + time + " ";
-		data := data + NumToStr(ClkRead(timer),2) + " ";
-		data := data + NumToStr(position.trans.x,1) + " ";
-		data := data + NumToStr(position.trans.y,1) + " ";
-		data := data + NumToStr(position.trans.z,1) + " ";
-		data := data + NumToStr(position.rot.q1,3) + " ";
-		data := data + NumToStr(position.rot.q2,3) + " ";
-		data := data + NumToStr(position.rot.q3,3) + " ";
-		data := data + NumToStr(position.rot.q4,3); !End of string	
-		IF connected = TRUE THEN
-			SocketSend clientSocket \Str:=data;
-		ENDIF
-		WaitTime loggerWaitTime;
+		!position := CRobT(\Tool:=currentTool \WObj:=currentWObj);
+		!data := "# 0 ";
+		!data := data + date + " " + time + " ";
+		!data := data + NumToStr(ClkRead(timer),2) + " ";
+		!data := data + NumToStr(position.trans.x,1) + " ";
+		!data := data + NumToStr(position.trans.y,1) + " ";
+		!data := data + NumToStr(position.trans.z,1) + " ";
+		!data := data + NumToStr(position.rot.q1,3) + " ";
+		!data := data + NumToStr(position.rot.q2,3) + " ";
+		!data := data + NumToStr(position.rot.q3,3) + " ";
+		!data := data + NumToStr(position.rot.q4,3); !End of string	
+		!IF connected = TRUE THEN
+		!	SocketSend clientSocket \Str:=data;
+		!ENDIF
 	
 		!Joint Coordinates
 		joints := CJointT();
