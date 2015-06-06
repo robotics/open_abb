@@ -1,44 +1,55 @@
 '''
-Michael Dawson-Haggerty
-
-abb.py: contains classes and support functions which interact with an ABB Robot running our software stack (RAPID code module SERVER)
-
-
-For functions which require targets (XYZ positions with quaternion orientation),
-targets can be passed as [[XYZ], [Quats]] OR [XYZ, Quats]
-
+Functions to serialize and send commands to an ABB IRC5- based robot. 
 '''
 
 import socket
-import json 
 import time
 import inspect
-from threading import Thread
-from collections import deque
+from threading import Thread, Event
 import logging
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
     
+_UNITS_L = {'millimeters': 1.0,
+            'meters'     : 1000.0,
+            'inches'     : 25.4}
+_UNITS_A = {'degrees' : 1.0,
+            'radians' : 57.2957795}
+_ZONES = {'z0'  : [.3,.3,.03], 
+          'z1'  : [1,1,.1], 
+          'z5'  : [5,8,.8], 
+          'z10' : [10,15,1.5], 
+          'z15' : [15,23,2.3], 
+          'z20' : [20,30,3], 
+          'z30' : [30,45,4.5], 
+          'z50' : [50,75,7.5], 
+          'z100': [100,150,15], 
+          'z200': [200,300,30]}
+_DELAY = .08
+
 class Robot:
     def __init__(self, 
                  ip          = '192.168.125.1', 
                  port_motion = 5000,
-                 port_logger = 5001):
+                 port_logger = 5001,
+                 callback_log = None):
 
-        self.delay   = .08
-
-        self.connect_motion((ip, port_motion))
-        #log_thread = Thread( target = self.connect_logger, 
-                             #args   = ((ip, port_logger),None) ).start()
+        # connect to the robot controller to start logging positions
+        # and joint values
+        self._stopped      = Event()
+        self._callback_log = callback_log
+        self._log_thread   = Thread( target = self.connect_logger, 
+                                     args   = ((ip, port_logger))).start()
         
+        self.connect_motion((ip, port_motion))
         self.set_units('millimeters', 'degrees')
         self.set_tool()
         self.set_workobject()
         self.set_speed()
         self.set_zone()
 
-    def connect_motion(self, remote):        
+    def _connect_motion(self, remote):        
         log.info('Attempting to connect to robot motion server at %s', str(remote))
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.settimeout(2.5)
@@ -46,45 +57,33 @@ class Robot:
         self.sock.settimeout(None)
         log.info('Connected to robot motion server at %s', str(remote))
 
-    def connect_logger(self, remote, maxlen=None):
-        self.pose   = deque(maxlen=maxlen)
-        self.joints = deque(maxlen=maxlen)
-        
-        print maxlen
-        
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect(remote)
-        s.setblocking(1)
+    def _connect_logger(self, remote):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(remote)
+        sock.setblocking(1)
         try:
-            while True:
-                data = s.recv(4096).split()
-                #print data
-                if   int(data[1]) == 0: 
-                    payload = map(float, data[4:])
-                    #print payload
-                    self.pose.append(payload)
+            while not self._stopped.is_set()
+                result = {}
+                data   = s.recv(4096).split()
+                if int(data[1]) == 0: 
+                    result['pose']   = map(float, data[4:])
                 elif int(data[1]) == 1:
-                    payload = map(float, data[4:])
-                    #print payload
-                    self.joints.append(payload)
+                    result['joints'] =  map(float, data[4:])
+                if not self._callback_log is None:
+                    self._callback_log(**result)
         finally:
-            s.shutdown(socket.SHUT_RDWR)
+            sock.shutdown(socket.SHUT_RDWR)
 
     def set_units(self, linear, angular):
-        units_l = {'millimeters': 1.0,
-                   'meters'     : 1000.0,
-                   'inches'     : 25.4}
-        units_a = {'degrees' : 1.0,
-                   'radians' : 57.2957795}
-        self.scale_linear = units_l[linear]
-        self.scale_angle  = units_a[angular]
+        self._scale_linear = _UNITS_L[linear]
+        self._scale_angle  = _UNITS_A[angular]
 
     def set_cartesian(self, pose):
         '''
         Executes a move immediately from the current pose,
         to 'pose', with units of millimeters.
         '''
-        msg  = "01 " + self.format_pose(pose)   
+        msg  = "01 " + self._format_pose(pose)   
         return self.send(msg)
 
     def set_joints(self, joints):
@@ -92,9 +91,10 @@ class Robot:
         Executes a move immediately, from current joint angles,
         to 'joints', in degrees. 
         '''
-        if len(joints) <> 6: return False
+        if len(joints) != 6: return False
         msg = "02 "
-        for joint in joints: msg += format(joint*self.scale_angle, "+08.2f") + " " 
+        for joint in joints: 
+            msg += format(joint*self._scale_angle, "+08.2f") + " " 
         msg += "#" 
         return self.send(msg)
 
@@ -113,7 +113,7 @@ class Robot:
         '''
         msg = "04 #"
         data = self.send(msg).split()
-        return [float(s) / self.scale_angle for s in data[2:8]]
+        return [float(s) / self._scale_angle for s in data[2:8]]
 
     def get_external_axis(self):
         '''
@@ -145,15 +145,9 @@ class Robot:
         Offsets are from tool0, which is defined at the intersection of the
         tool flange center axis and the flange face.
         '''
-        msg       = "06 " + self.format_pose(tool)    
+        msg       = "06 " + self._format_pose(tool)    
         self.send(msg)
         self.tool = tool
-
-    def load_json_tool(self, file_obj):
-        if file_obj.__class__.__name__ == 'str':
-            file_obj = open(filename, 'rb');
-        tool = check_coordinates(json.load(file_obj))
-        self.set_tool(tool)
         
     def get_tool(self): 
         log.debug('get_tool returning: %s', str(self.tool))
@@ -164,7 +158,7 @@ class Robot:
         The workobject is a local coordinate frame you can define on the robot,
         then subsequent cartesian moves will be in this coordinate frame. 
         '''
-        msg = "07 " + self.format_pose(work_obj)   
+        msg = "07 " + self._format_pose(work_obj)   
         self.send(msg)
 
     def set_speed(self, speed=[100,50,50,50]):
@@ -173,7 +167,7 @@ class Robot:
                 external axis linear, external axis orientation]
         '''
 
-        if len(speed) <> 4: return False
+        if len(speed) != 4: return False
         msg = "08 " 
         msg += format(speed[0], "+08.1f") + " " 
         msg += format(speed[1], "+08.2f") + " "  
@@ -184,17 +178,7 @@ class Robot:
     def set_zone(self, 
                  zone_key     = 'z1', 
                  point_motion = False, 
-                 manual_zone  = []):
-        zone_dict = {'z0'  : [.3,.3,.03], 
-                    'z1'  : [1,1,.1], 
-                    'z5'  : [5,8,.8], 
-                    'z10' : [10,15,1.5], 
-                    'z15' : [15,23,2.3], 
-                    'z20' : [20,30,3], 
-                    'z30' : [30,45,4.5], 
-                    'z50' : [50,75,7.5], 
-                    'z100': [100,150,15], 
-                    'z200': [200,300,30]}
+                 manual_zone  = None):
         '''
         Sets the motion zone of the robot. This can also be thought of as
         the flyby zone, AKA if the robot is going from point A -> B -> C,
@@ -215,10 +199,11 @@ class Robot:
 
         if point_motion: 
             zone = [0,0,0]
-        elif len(manual_zone) == 3: 
+        elif ((not manual_zone is None) and 
+              len(manual_zone) == 3): 
             zone = manual_zone
-        elif zone_key in zone_dict.keys(): 
-            zone = zone_dict[zone_key]
+        elif zone_key in _ZONES: 
+            zone = _ZONES[zone_key]
         else: return False
         
         msg = "09 " 
@@ -233,7 +218,7 @@ class Robot:
         Appends single pose to the remote buffer
         Move will execute at current speed (which you can change between buffer_add calls)
         '''
-        msg = "30 " + self.format_pose(pose) 
+        msg = "30 " + self._format_pose(pose) 
         self.send(msg)
 
     def buffer_set(self, pose_list):
@@ -255,7 +240,7 @@ class Robot:
     def clear_buffer(self):
         msg = "31 #"
         data = self.send(msg)
-        if self.buffer_len() <> 0:
+        if self.buffer_len() != 0:
             log.warn('clear_buffer failed! buffer_len: %i', self.buffer_len())
             raise NameError('clear_buffer failed!')
         return data
@@ -276,7 +261,7 @@ class Robot:
         return self.send(msg)
 
     def set_external_axis(self, axis_unscaled=[-550,0,0,0,0,0]):
-        if len(axis_values) <> 6: return False
+        if len(axis_values) != 6: return False
         msg = "34 "
         for axis in axis_values:
             msg += format(axis, "+08.2f") + " " 
@@ -288,11 +273,11 @@ class Robot:
         Executes a movement in a circular path from current position, 
         through pose_onarc, to pose_end
         '''
-        msg_0 = "35 " + self.format_pose(pose_onarc)  
-        msg_1 = "36 " + self.format_pose(pose_end)
+        msg_0 = "35 " + self._format_pose(pose_onarc)  
+        msg_1 = "36 " + self._format_pose(pose_end)
 
         data = self.send(msg_0).split()
-        if data[1] <> '1': 
+        if data[1] != '1': 
             log.warn('move_circular incorrect response, bailing!')
             return False
         return self.send(msg_1)
@@ -304,8 +289,7 @@ class Robot:
         and fill in the DIO you want this to switch. 
         '''
         msg = '97 ' + str(int(bool(value))) + ' #'
-        return 
-        #return self.send(msg)
+        return self.send(msg)
         
     def send(self, message, wait_for_response=True):
         '''
@@ -315,17 +299,17 @@ class Robot:
         caller = inspect.stack()[1][3]
         log.debug('%-14s sending: %s', caller, message)
         self.sock.send(message)
-        time.sleep(self.delay)
+        time.sleep(_DELAY)
         if not wait_for_response: return
         data = self.sock.recv(4096)
         log.debug('%-14s recieved: %s', caller, data)
         return data
         
-    def format_pose(self, pose):
-        pose = check_coordinates(pose)
+    def _format_pose(self, pose):
+        pose = _check_coordinates(pose)
         msg  = ''
         for cartesian in pose[0]:
-            msg += format(cartesian * self.scale_linear,  "+08.1f") + " " 
+            msg += format(cartesian * self._scale_linear,  "+08.1f") + " " 
         for quaternion in pose[1]:
             msg += format(quaternion, "+08.5f") + " " 
         msg += "#" 
@@ -335,6 +319,7 @@ class Robot:
         self.send("99 #", False)
         self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
+        self._stopped.set()
         log.info('Disconnected from ABB robot.')
 
     def __enter__(self):
@@ -343,7 +328,7 @@ class Robot:
     def __exit__(self, type, value, traceback):
         self.close()
 
-def check_coordinates(coordinates):
+def _check_coordinates(coordinates):
     if ((len(coordinates) == 2) and
         (len(coordinates[0]) == 3) and 
         (len(coordinates[1]) == 4)): 
