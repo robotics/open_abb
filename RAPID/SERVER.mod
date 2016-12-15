@@ -461,7 +461,7 @@ ERROR (LONG_JMP_ALL_ERR)
             SocketClose serverSocket;
             !//Reinitiate the server
             ServerCreateAndConnect ipController,serverPort;
-            reconnected:= TRUE;
+            reconnected:= FALSE;
             connected:= TRUE;
             RETRY; 
         DEFAULT:
@@ -474,7 +474,7 @@ ERROR (LONG_JMP_ALL_ERR)
             SocketClose serverSocket;
             !//Reinitiate the server
             ServerCreateAndConnect ipController,serverPort;
-            reconnected:= TRUE;
+            reconnected:= FALSE;
             connected:= TRUE;
             RETRY;
     ENDTEST
